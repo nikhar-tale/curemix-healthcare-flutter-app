@@ -11,7 +11,7 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> 
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -19,8 +19,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
-    // Set status bar color
+
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -28,7 +27,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Initialize animation
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -42,8 +40,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
-
-    // Navigate after delay
     _navigateToHome();
   }
 
@@ -76,30 +72,15 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo Placeholder
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.health_and_safety_rounded,
-                    size: 60,
-                    color: Colors.white,
-                  ),
+                // Curemix Logo
+                Image.asset(
+                  'assets/images/curemix_logo.png',
+                  width: 150,
+                  height: 91,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Brand Name
                 const Text(
                   AppStrings.appName,
@@ -110,9 +91,9 @@ class _SplashScreenState extends State<SplashScreen>
                     letterSpacing: 0.5,
                   ),
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Tagline
                 Text(
                   AppStrings.tagline,

@@ -1,5 +1,8 @@
+import 'package:curemix_healtcare_flutter_app/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'screens/splash/splash_screen.dart';
 import 'core/constants/app_colors.dart';
@@ -7,18 +10,27 @@ import 'core/constants/app_strings.dart';
 import 'providers/product_provider.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // ✅ Initialize Hive
+  await Hive.initFlutter();
 
-    // ✅ Configure image cache
+  // ✅ Register adapters
+  Hive.registerAdapter(ProductImageAdapter());
+  Hive.registerAdapter(ProductCategoryAdapter());
+  Hive.registerAdapter(ProductAdapter());
+  // ✅ Configure image cache
   // DefaultCacheManager().emptyCache(); // Clear old cache on app start (optional)
-  
+
+
+  // ✅ Open products box
+  await Hive.openBox<Product>('products');
   // Set preferred orientations (portrait only)
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -29,7 +41,7 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  
+
   runApp(const CuremixApp());
 }
 
@@ -40,13 +52,11 @@ class CuremixApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Wrap with MultiProvider for state management
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ProductProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => ProductProvider())],
       child: MaterialApp(
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
-        
+
         // Theme Configuration
         theme: ThemeData(
           // Primary Colors
@@ -57,10 +67,10 @@ class CuremixApp extends StatelessWidget {
             secondary: AppColors.secondary,
             background: AppColors.background,
           ),
-          
+
           // Scaffold Background
           scaffoldBackgroundColor: AppColors.background,
-          
+
           // App Bar Theme
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.white,
@@ -77,7 +87,7 @@ class CuremixApp extends StatelessWidget {
               statusBarIconBrightness: Brightness.dark,
             ),
           ),
-          
+
           // Card Theme
           cardTheme: CardThemeData(
             color: AppColors.cardBackground,
@@ -86,7 +96,7 @@ class CuremixApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          
+
           // Input Decoration Theme
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
@@ -108,17 +118,14 @@ class CuremixApp extends StatelessWidget {
               vertical: 16,
             ),
           ),
-          
+
           // Elevated Button Theme
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 2,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -128,7 +135,7 @@ class CuremixApp extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Text Button Theme
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
@@ -139,7 +146,7 @@ class CuremixApp extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Bottom Navigation Bar Theme
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
             backgroundColor: Colors.white,
@@ -156,7 +163,7 @@ class CuremixApp extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          
+
           // Text Theme
           textTheme: const TextTheme(
             displayLarge: TextStyle(
@@ -189,24 +196,15 @@ class CuremixApp extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
-            bodyLarge: TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
-            bodyMedium: TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-            ),
-            bodySmall: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
+            bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimary),
+            bodyMedium: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+            bodySmall: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
-          
+
           // Use Material 3
           useMaterial3: true,
         ),
-        
+
         // Start with Splash Screen
         home: const SplashScreen(),
       ),

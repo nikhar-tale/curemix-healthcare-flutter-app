@@ -1,3 +1,4 @@
+import 'package:curemix_healtcare_flutter_app/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/product_provider.dart';
@@ -64,13 +65,13 @@ class _HomeScreenState extends State<HomeScreen> {
     await context.read<ProductProvider>().refreshProducts();
   }
 
-  void _navigateToProductDetails(String productId) {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => ProductDetailsScreen(productId: productId),
-    //   ),
-    // );
+  void _navigateToProductDetails(Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductDetailsScreen(product: product),
+      ),
+    );
   }
 
   @override
@@ -80,12 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text(AppStrings.appName),
         actions: [
           // Cart Icon (for future use)
-          IconButton(
-            icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () {
-              // TODO: Navigate to cart
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.shopping_cart_outlined),
+          //   onPressed: () {
+          //     // TODO: Navigate to cart
+          //   },
+          // ),
         ],
       ),
       body: Consumer<ProductProvider>(
@@ -176,10 +177,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
-                final product = provider.products[index];
+                final Product product = provider.products[index];
                 return ProductCard(
                   product: product,
-                  onTap: () => _navigateToProductDetails(product.id),
+                  onTap: () => _navigateToProductDetails(product),
                 );
               },
             ),
