@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../../models/product_model.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -7,24 +8,23 @@ class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
 
-  const ProductCard({
-    super.key,
-    required this.product,
-    required this.onTap,
-  });
+  const ProductCard({super.key, required this.product, required this.onTap});
 
   @override
   State<ProductCard> createState() => _ProductCardState();
 }
 
-class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClientMixin {
+class _ProductCardState extends State<ProductCard>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true; // ✅ Keep widget alive when scrolling
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // ✅ Must call super when using AutomaticKeepAliveClientMixin
-    
+    super.build(
+      context,
+    ); // ✅ Must call super when using AutomaticKeepAliveClientMixin
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Card(
@@ -45,11 +45,12 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                       topRight: Radius.circular(12),
                     ),
                     child: CachedNetworkImage(
-                      imageUrl: widget. product.imageUrl,
+                      
+                      imageUrl: widget.product.imageUrl,
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
-                      cacheKey: widget.  product.id, // ✅ Explicit cache key
+                      // cacheKey: widget.  product.id, // ✅ Explicit cache key
                       memCacheWidth: 400, // ✅ Resize for memory efficiency
                       memCacheHeight: 400, // ✅ Resize for memory efficiency
                       fadeInDuration: const Duration(
@@ -73,7 +74,7 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                   ),
 
                   // Discount Badge
-                  if ( widget. product.hasDiscount)
+                  if (widget.product.hasDiscount)
                     Positioned(
                       top: 8,
                       left: 8,
@@ -87,7 +88,7 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          '${ widget. product.discountPercentage}% OFF',
+                          '${widget.product.discountPercentage}% OFF',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -98,7 +99,7 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                     ),
 
                   // Prescription Required Badge
-                  if ( widget. product.prescriptionRequired)
+                  if (widget.product.prescriptionRequired)
                     Positioned(
                       top: 8,
                       right: 8,
@@ -153,7 +154,7 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                   children: [
                     // Product Name
                     Text(
-                       widget. product.name,
+                      widget.product.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -166,9 +167,9 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                     const SizedBox(height: 4),
 
                     // Category
-                    if ( widget. product.category != null)
+                    if (widget.product.category != null)
                       Text(
-                         widget. product.category!,
+                        widget.product.category!,
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade600,
@@ -206,22 +207,22 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
                     // ),
 
                     // Rating
-                    if ( widget. product.rating != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, size: 14, color: Colors.amber),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.  product.rating!.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    // if ( widget. product.rating != null) ...[
+                    //   const SizedBox(height: 4),
+                    //   Row(
+                    //     children: [
+                    //       const Icon(Icons.star, size: 14, color: Colors.amber),
+                    //       const SizedBox(width: 4),
+                    //       Text(
+                    //         widget.  product.rating!.toStringAsFixed(1),
+                    //         style: const TextStyle(
+                    //           fontSize: 11,
+                    //           fontWeight: FontWeight.w600,
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ],
                   ],
                 ),
               ),
@@ -231,4 +232,21 @@ class _ProductCardState extends State<ProductCard> with AutomaticKeepAliveClient
       ),
     );
   }
+}
+
+
+class MyCacheManager extends CacheManager {
+  static const key = 'curemixImageCache';
+  static final instance = MyCacheManager._();
+
+  MyCacheManager._()
+      : super(
+          Config(
+            key,
+            stalePeriod: const Duration(days: 30),
+            maxNrOfCacheObjects: 200,
+            repo: JsonCacheInfoRepository(databaseName: key),
+            fileService: HttpFileService(),
+          ),
+        );
 }

@@ -19,10 +19,10 @@ class CacheService {
     }
   }
 
-  // Get cached products
-  List<Product> getCachedProducts() {
-    return _productsBox.values.toList();
-  }
+  // Get cached products in reverse order
+List<Product> getCachedProducts() {
+  return _productsBox.values.toList().reversed.toList();
+}
 
   // Check if cache exists
   bool hasCache() {

@@ -8,7 +8,7 @@ import 'screens/splash/splash_screen.dart';
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_strings.dart';
 import 'providers/product_provider.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +24,7 @@ Future<void> main() async {
 
 
   // ✅ Open products box
-  await Hive.openBox<Product>('products');
+  // await Hive.openBox<Product>('products');
   // Set preferred orientations (portrait only)
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

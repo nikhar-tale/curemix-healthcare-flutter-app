@@ -32,6 +32,6 @@ class ApiConstants {
   }
   
   static String searchUrl(String query, {int page = 1, int perPage = 10}) {
-    return '$baseUrl$products?consumer_key=$consumerKey&consumer_secret=$consumerSecret&search=$query&per_page=$perPage&page=$page';
-  }
+  return '$baseUrl$products?consumer_key=$consumerKey&consumer_secret=$consumerSecret&search=$query&per_page=$perPage&page=$page';
+}
 }

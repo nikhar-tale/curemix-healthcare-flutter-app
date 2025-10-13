@@ -82,39 +82,37 @@ if (response.statusCode == 200) {
   }
 
   // Search products
-Future<ApiResponse<List<Product>>> searchProducts(String query)  async {
-    // try {
-    //   final uri = Uri.parse(ApiConstants.searchUrl).replace(
-    //     queryParameters: {'q': query},
-    //   );
+Future<ApiResponse<List<Product>>> searchProducts(String query, {int page = 1, int perPage = 20}) async {
+    try {
+      final uri = Uri.parse(ApiConstants.searchUrl(query, page: page, perPage: perPage));
 
-    //   final response = await http
-    //       .get(uri, headers: ApiConstants.headers)
-    //       .timeout(ApiConstants.connectionTimeout);
+      final response = await http
+          .get(uri, headers: ApiConstants.headers)
+          .timeout(ApiConstants.connectionTimeout);
 
-    //   if (response.statusCode == 200) {
-    //     final jsonData = json.decode(response.body);
-    //     final List<dynamic> productsJson = jsonData['data'] ?? [];
-    //     final List<Product> products = productsJson
-    //         .map((json) => Product.fromJson(json))
-    //         .toList();
+      if (response.statusCode == 200) {
+        // WooCommerce returns array directly
+        final List<dynamic> productsJson = json.decode(response.body);
+        final List<Product> products = productsJson
+            .map((json) => Product.fromJson(json))
+            .toList();
 
-    //     return ApiResponse.success(
-    //       message: 'Search completed',
-    //       data: products,
-    //     );
-    //   } else {
-    //     return ApiResponse.error(
-    //       message: 'Search failed',
-    //       error: 'Status code: ${response.statusCode}',
-    //     );
-    //   }
-    // } catch (e) {
-    //   return ApiResponse.error(
-    //     message: 'Something went wrong',
-    //     error: e.toString(),
-    //   );
-    // }
+        return ApiResponse.success(
+          message: 'Search completed',
+          data: products,
+        );
+      } else {
+        return ApiResponse.error(
+          message: 'Search failed',
+          error: 'Status code: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return ApiResponse.error(
+        message: 'Something went wrong',
+        error: e.toString(),
+      );
+    }
     return ApiResponse.error(
       message: 'Search not implemented',
       error: 'Search functionality is currently not implemented.',

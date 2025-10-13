@@ -1,4 +1,5 @@
 import 'package:curemix_healtcare_flutter_app/models/product_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/product_provider.dart';
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Fetch products on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().fetchProducts();
+      context.read<ProductProvider>().fetchProducts(context: context,);
     });
 
     // ✅ Add scroll listener for pagination
@@ -37,19 +38,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final pixels = _scrollController.position.pixels;
     final maxScroll = _scrollController.position.maxScrollExtent;
 
-    print('📜 pixels: $pixels, max: $maxScroll');
+    if (kDebugMode) {
+      print('📜 pixels: $pixels, max: $maxScroll');
+    }
 
     // Load when 80% scrolled
     if (pixels >= maxScroll * 0.8) {
       final provider = context.read<ProductProvider>();
 
-      print(
+      if (kDebugMode) {
+        print(
         '📜 Near bottom! isLoading: ${provider.isLoading}, hasMore: ${provider.hasMoreProducts}',
       );
+      }
 
       if (!provider.isLoading && provider.hasMoreProducts) {
-        print('📜 Loading more...');
-        provider.fetchProducts(loadMore: true);
+        if (kDebugMode) {
+          print('📜 Loading more...');
+        }
+        provider.fetchProducts(context: context, loadMore: true);
       }
     }
   }
@@ -62,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await context.read<ProductProvider>().refreshProducts();
+    await context.read<ProductProvider>().refreshProducts(context: context,);
   }
 
   void _navigateToProductDetails(Product product) {
@@ -77,18 +84,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.appName),
-        actions: [
-          // Cart Icon (for future use)
-          // IconButton(
-          //   icon: const Icon(Icons.shopping_cart_outlined),
-          //   onPressed: () {
-          //     // TODO: Navigate to cart
-          //   },
-          // ),
-        ],
-      ),
+      // appBar: 
+      // AppBar(
+      //   title: const Text(AppStrings.appName),
+      //   actions: [
+      //     // Cart Icon (for future use)
+      //     // IconButton(
+      //     //   icon: const Icon(Icons.shopping_cart_outlined),
+      //     //   onPressed: () {
+      //     //     // TODO: Navigate to cart
+      //     //   },
+      //     // ),
+      //   ],
+      // ),
       body: Consumer<ProductProvider>(
         builder: (context, provider, child) {
           // Loading State
@@ -114,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () => provider.fetchProducts(),
+                    onPressed: () => provider.fetchProducts(context: context,),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
                   ),
