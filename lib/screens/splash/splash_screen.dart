@@ -1,5 +1,6 @@
 import 'package:curemix_healtcare_flutter_app/providers/product_provider.dart';
 import 'package:curemix_healtcare_flutter_app/screens/main_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -51,6 +52,9 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (kDebugMode) {
+      print('didChangeDependencies called');
+    }
     precacheImage(const AssetImage('assets/images/curemix_logo.webp'), context);
   }
 
@@ -90,12 +94,14 @@ class _SplashScreenState extends State<SplashScreen>
               children: [
                 // Curemix Logo
                 Image.asset(
+                  
                   'assets/images/curemix_logo.webp',
-                  width: 150,
-                  height: 250,
+                  width: 200,     
+                  
+                  
                 ),
 
-                const SizedBox(height: 24),
+                // const SizedBox(height: 24),
 
                 // Brand Name
                 // const Text(
