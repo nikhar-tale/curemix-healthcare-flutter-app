@@ -1,3 +1,5 @@
+import 'package:curemix_healtcare_flutter_app/widgets/image_fullscreen_viewer.dart';
+import 'package:curemix_healtcare_flutter_app/widgets/product_image_gallery.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -7,10 +9,7 @@ import '../../core/constants/app_colors.dart';
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
 
-  const ProductDetailsScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailsScreen({super.key, required this.product});
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
@@ -33,12 +32,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       appBar: AppBar(
         title: const Text('Product Details'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () {
-              // TODO: Implement share
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.share_outlined),
+          //   onPressed: () {
+          //     // TODO: Implement share
+          //   },
+          // ),
           // IconButton(
           //   icon: const Icon(Icons.favorite_border),
           //   onPressed: () {
@@ -84,12 +83,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                         // Price Section
                         // _buildPriceSection(),
-
                         const SizedBox(height: 16),
 
                         // Stock & SKU
                         // _buildStockAndSku(),
-
                         const SizedBox(height: 16),
 
                         // Categories
@@ -122,11 +119,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  // Image Carousel Widget using PageView
   Widget _buildImageCarousel() {
     final images = widget.product.images.isNotEmpty
-        ? widget.product.images
-        : [ProductImage(id: 0, src: widget.product.imageUrl)];
+        ? widget.product.images.map((e) => e.src).toList()
+        : [widget.product.imageUrl];
 
     return Container(
       color: Colors.grey.shade50,
@@ -134,102 +130,149 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         children: [
           Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: images.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentImageIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    // TODO: Open full screen image viewer
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: CachedNetworkImage(
-                      memCacheWidth: 400, // ✅ Resize for memory efficiency
-                      memCacheHeight: 400, // ✅ Resize for memory efficiency
-                      fadeInDuration: const Duration(
-                        milliseconds: 200,
-                      ), // ✅ Faster fade
-                      imageUrl: images[index].src,
-                      fit: BoxFit.contain,
-                      cacheKey: images[index].id.toString(),
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          size: 60,
-                          color: Colors.grey,
-                        ),
-                      ),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (_, __, ___) => ImageFullscreenViewer(
+                      imageUrls: images,
+                      initialIndex: _currentImageIndex,
                     ),
+                    transitionsBuilder: (_, animation, __, child) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
                   ),
                 );
               },
+              child: ProductImageGallery(
+                imageUrls: images,
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentImageIndex = index;
+                  });
+                },
+              ),
             ),
           ),
-
-          // Image Indicators
-          if (images.length > 1) ...[
-            const SizedBox(height: 12),
-            SmoothPageIndicator(
-              controller: _pageController,
-              count: images.length,
-              effect: WormEffect(
-                dotHeight: 8,
-                dotWidth: 8,
-                activeDotColor: AppColors.primary,
-                dotColor: Colors.grey.shade300,
+          if (images.length > 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: SmoothPageIndicator(
+                controller: _pageController,
+                count: images.length,
+                effect: WormEffect(
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  activeDotColor: AppColors.primary,
+                  dotColor: Colors.grey.shade300,
+                ),
               ),
-              onDotClicked: (index) {
-                _pageController.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeIn,
-                );
-              },
             ),
-            const SizedBox(height: 16),
-          ],
         ],
       ),
     );
   }
 
+  // // Image Carousel Widget using PageView
+  // Widget _buildImageCarousel() {
+  //   final images = widget.product.images.isNotEmpty
+  //       ? widget.product.images
+  //       : [ProductImage(id: 0, src: widget.product.imageUrl)];
+
+  //   return Container(
+  //     color: Colors.grey.shade50,
+  //     height: 380,
+  //     child: Column(
+  //       children: [
+  //         Expanded(
+  //           child: PageView.builder(
+  //             controller: _pageController,
+  //             itemCount: images.length,
+  //             onPageChanged: (index) {
+  //               setState(() {
+  //                 _currentImageIndex = index;
+  //               });
+  //             },
+  //             itemBuilder: (context, index) {
+  //               return GestureDetector(
+  //                 onTap: () {
+  //                   // TODO: Open full screen image viewer
+  //                 },
+  //                 child: Padding(
+  //                   padding: const EdgeInsets.all(16),
+  //                   child: CachedNetworkImage(
+  //                     memCacheWidth: 400, // ✅ Resize for memory efficiency
+  //                     memCacheHeight: 400, // ✅ Resize for memory efficiency
+  //                     fadeInDuration: const Duration(
+  //                       milliseconds: 200,
+  //                     ), // ✅ Faster fade
+  //                     imageUrl: images[index].src,
+  //                     fit: BoxFit.contain,
+  //                     cacheKey: images[index].id.toString(),
+  //                     placeholder: (context, url) => Container(
+  //                       color: Colors.grey.shade200,
+  //                       child: const Center(
+  //                         child: CircularProgressIndicator(),
+  //                       ),
+  //                     ),
+  //                     errorWidget: (context, url, error) => Container(
+  //                       color: Colors.grey.shade200,
+  //                       child: const Icon(
+  //                         Icons.image_not_supported,
+  //                         size: 60,
+  //                         color: Colors.grey,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+
+  //         // Image Indicators
+  //         if (images.length > 1) ...[
+  //           const SizedBox(height: 12),
+  //           SmoothPageIndicator(
+  //             controller: _pageController,
+  //             count: images.length,
+  //             effect: WormEffect(
+  //               dotHeight: 8,
+  //               dotWidth: 8,
+  //               activeDotColor: AppColors.primary,
+  //               dotColor: Colors.grey.shade300,
+  //             ),
+  //             onDotClicked: (index) {
+  //               _pageController.animateToPage(
+  //                 index,
+  //                 duration: const Duration(milliseconds: 300),
+  //                 curve: Curves.easeIn,
+  //               );
+  //             },
+  //           ),
+  //           const SizedBox(height: 16),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
+
   // Rating Section
   Widget _buildRatingSection() {
     return Row(
       children: [
-        const Icon(
-          Icons.star,
-          color: Colors.amber,
-          size: 20,
-        ),
+        const Icon(Icons.star, color: Colors.amber, size: 20),
         const SizedBox(width: 4),
         Text(
           widget.product.rating!.toStringAsFixed(1),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(width: 4),
         Text(
           '(${widget.product.totalSales ?? 0} reviews)',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -242,9 +285,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
-        ),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -274,10 +315,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
             // Discount Badge
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.green,
                 borderRadius: BorderRadius.circular(4),
@@ -303,10 +341,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       children: [
         // Stock Status
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: widget.product.isInStock
                 ? Colors.green.shade50
@@ -322,13 +357,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                widget.product.isInStock
-                    ? Icons.check_circle
-                    : Icons.cancel,
+                widget.product.isInStock ? Icons.check_circle : Icons.cancel,
                 size: 16,
-                color: widget.product.isInStock
-                    ? Colors.green
-                    : Colors.red,
+                color: widget.product.isInStock ? Colors.green : Colors.red,
               ),
               const SizedBox(width: 4),
               Text(
@@ -349,20 +380,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         if (widget.product.hasSku) ...[
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               'SKU: ${widget.product.sku}',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
             ),
           ),
         ],
@@ -389,10 +414,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           runSpacing: 8,
           children: widget.product.categories.map((category) {
             return Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),

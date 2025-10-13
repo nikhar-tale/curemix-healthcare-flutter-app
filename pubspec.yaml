@@ -57,6 +57,8 @@ dependencies:
   smooth_page_indicator: ^1.1.0  # For carousel dots
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  photo_view: ^0.15.0
+  
 
 
 dev_dependencies:
