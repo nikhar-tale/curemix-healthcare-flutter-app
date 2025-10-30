@@ -1,4 +1,4 @@
-package com.example.curemix_healtcare_flutter_app
+package com.curemix.healthcare
 
 import io.flutter.embedding.android.FlutterActivity
 
