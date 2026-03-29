@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'product_image_gallery.dart';
 
 class ImageFullscreenViewer extends StatefulWidget {
@@ -95,16 +96,39 @@ class _ImageFullscreenViewerState extends State<ImageFullscreenViewer> {
                     else
                       const SizedBox.shrink(),
 
-                    // Close button
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white, size: 24),
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                    // Top Right Actions
+                    Row(
+                      children: [
+                        // Share Image
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.share, color: Colors.white, size: 20),
+                            onPressed: () async {
+                              // Share the current image URL or file
+                              await Share.share(
+                                widget.imageUrls[_currentIndex],
+                                subject: 'Product Image',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Close button
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
