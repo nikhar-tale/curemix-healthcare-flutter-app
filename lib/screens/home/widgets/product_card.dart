@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../models/product_model.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../services/pdf_generator_service.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -45,7 +47,6 @@ class _ProductCardState extends State<ProductCard>
                       topRight: Radius.circular(12),
                     ),
                     child: CachedNetworkImage(
-                      
                       imageUrl: widget.product.imageUrl,
                       width: double.infinity,
                       height: double.infinity,
@@ -68,6 +69,66 @@ class _ProductCardState extends State<ProductCard>
                           Icons.medical_services,
                           size: 40,
                           color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Quick Share Button (top-right)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () async {
+                          try {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Generating PDF...'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                            final file =
+                                await PdfGeneratorService.generateProductPdf(
+                                  widget.product,
+                                );
+                            if (!context.mounted) return;
+                            await Share.shareXFiles(
+                              [XFile(file.path)],
+                              text:
+                                  'Check out this product: ${widget.product.name}',
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Could not share PDF at this time.',
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.share,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ),
@@ -101,8 +162,8 @@ class _ProductCardState extends State<ProductCard>
                   // Prescription Required Badge
                   if (widget.product.prescriptionRequired)
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: 38,
+                      left: 8,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -117,29 +178,31 @@ class _ProductCardState extends State<ProductCard>
                       ),
                     ),
 
-                  // // Out of Stock Overlay
-                  // if (!product.isInStock)
-                  //   Positioned.fill(
-                  //     child: Container(
-                  //       decoration: BoxDecoration(
-                  //         color: Colors.black.withOpacity(0.6),
-                  //         borderRadius: const BorderRadius.only(
-                  //           topLeft: Radius.circular(12),
-                  //           topRight: Radius.circular(12),
-                  //         ),
-                  //       ),
-                  //       child: const Center(
-                  //         child: Text(
-                  //           'OUT OF STOCK',
-                  //           style: TextStyle(
-                  //             color: Colors.white,
-                  //             fontWeight: FontWeight.bold,
-                  //             fontSize: 12,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ),
+                  // Visual Stock Badge
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.product.isInStock
+                            ? Colors.green.withOpacity(0.9)
+                            : Colors.red.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        widget.product.isInStock ? 'IN STOCK' : 'OUT OF STOCK',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -176,53 +239,36 @@ class _ProductCardState extends State<ProductCard>
                         ),
                       ),
 
+                    // Packaging / Short Desc
+                    if (widget.product.shortDescription != null &&
+                        widget.product.shortDescription!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          widget.product.shortDescription!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+
                     const Spacer(),
 
-                    // // Price Row
-                    // Row(
-                    //   children: [
-                    //     // Current Price
-                    //     Text(
-                    //       product.formattedPrice,
-                    //       style: const TextStyle(
-                    //         fontSize: 16,
-                    //         fontWeight: FontWeight.bold,
-                    //         color: AppColors.primary,
-                    //       ),
-                    //     ),
-
-                    //     const SizedBox(width: 6),
-
-                    //     // MRP (strikethrough)
-                    //     if (product.mrp != null && product.hasDiscount)
-                    //       Text(
-                    //         product.formattedMrp,
-                    //         style: TextStyle(
-                    //           fontSize: 12,
-                    //           decoration: TextDecoration.lineThrough,
-                    //           color: Colors.grey.shade500,
-                    //         ),
-                    //       ),
-                    //   ],
-                    // ),
-
-                    // Rating
-                    // if ( widget. product.rating != null) ...[
-                    //   const SizedBox(height: 4),
-                    //   Row(
-                    //     children: [
-                    //       const Icon(Icons.star, size: 14, color: Colors.amber),
-                    //       const SizedBox(width: 4),
-                    //       Text(
-                    //         widget.  product.rating!.toStringAsFixed(1),
-                    //         style: const TextStyle(
-                    //           fontSize: 11,
-                    //           fontWeight: FontWeight.w600,
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ],
+                    // Price Row
+                    if (widget.product.price > 0)
+                      Text(
+                        widget.product.formattedPrice,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                   ],
                 ),
               ),
@@ -234,19 +280,18 @@ class _ProductCardState extends State<ProductCard>
   }
 }
 
-
 class MyCacheManager extends CacheManager {
   static const key = 'curemixImageCache';
   static final instance = MyCacheManager._();
 
   MyCacheManager._()
-      : super(
-          Config(
-            key,
-            stalePeriod: const Duration(days: 30),
-            maxNrOfCacheObjects: 200,
-            repo: JsonCacheInfoRepository(databaseName: key),
-            fileService: HttpFileService(),
-          ),
-        );
+    : super(
+        Config(
+          key,
+          stalePeriod: const Duration(days: 30),
+          maxNrOfCacheObjects: 200,
+          repo: JsonCacheInfoRepository(databaseName: key),
+          fileService: HttpFileService(),
+        ),
+      );
 }

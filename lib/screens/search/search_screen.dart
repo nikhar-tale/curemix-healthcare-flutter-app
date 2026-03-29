@@ -10,7 +10,9 @@ import '../home/widgets/product_list_tile.dart';
 import '../../widgets/custom_app_bar.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final String? initialQuery;
+
+  const SearchScreen({super.key, this.initialQuery});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -22,13 +24,17 @@ class _SearchScreenState extends State<SearchScreen> {
   
   bool _isListView = true;
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'In Stock', 'Tablets', 'Syrups', 'Creams', 'Injections'];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().clearSearch();
+      if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+        _searchController.text = widget.initialQuery!;
+        context.read<ProductProvider>().searchProducts(widget.initialQuery!);
+      } else {
+        context.read<ProductProvider>().clearSearch();
+      }
     });
   }
 
@@ -68,14 +74,22 @@ class _SearchScreenState extends State<SearchScreen> {
 
   List<Product> _applyLocalFilters(List<Product> products) {
     if (_selectedFilter == 'All') return products;
-    if (_selectedFilter == 'In Stock') {
-      return products.where((p) => p.isInStock).toList();
-    }
-    // For category filters
+    // Match against any of the product's categories
     return products.where((p) {
-      final cat = p.category?.toLowerCase() ?? '';
-      return cat.contains(_selectedFilter.toLowerCase());
+      return p.allCategoryNames.any(
+        (catName) => catName.toLowerCase() == _selectedFilter.toLowerCase(),
+      );
     }).toList();
+  }
+
+  List<String> _buildDynamicFilters(List<Product> products) {
+    final Set<String> cats = {'All'};
+    for (final product in products) {
+      for (final catName in product.allCategoryNames) {
+        if (catName.isNotEmpty) cats.add(catName);
+      }
+    }
+    return cats.toList();
   }
 
   @override
@@ -83,23 +97,26 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(),
-      body: Column(
-        children: [
-          // 1. Search Bar
-          _buildSearchBar(),
-          
-          // 2. Filter Pills
-          _buildFilterPills(),
+      body: Consumer<ProductProvider>(
+        builder: (context, provider, child) {
+          final dynamicFilters = _buildDynamicFilters(
+            _searchController.text.isEmpty ? provider.products : provider.searchResults,
+          );
+          return Column(
+            children: [
+              // 1. Search Bar
+              _buildSearchBar(),
+              
+              // 2. Filter Pills
+              _buildFilterPills(dynamicFilters),
 
-          // 3. Search Results
-          Expanded(
-            child: Consumer<ProductProvider>(
-              builder: (context, provider, child) {
-                return _buildSearchResults(provider);
-              },
-            ),
-          ),
-        ],
+              // 3. Search Results
+              Expanded(
+                child: _buildSearchResults(provider),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -160,7 +177,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildFilterPills() {
+  Widget _buildFilterPills(List<String> filters) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.only(bottom: 12),
@@ -169,9 +186,9 @@ class _SearchScreenState extends State<SearchScreen> {
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: _filters.length,
+          itemCount: filters.length,
           itemBuilder: (context, index) {
-            final filter = _filters[index];
+            final filter = filters[index];
             final isSelected = _selectedFilter == filter;
             return Padding(
               padding: const EdgeInsets.only(right: 8),

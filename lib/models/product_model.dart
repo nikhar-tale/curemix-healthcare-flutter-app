@@ -185,7 +185,7 @@ class Product {
   }
 
   // Computed properties
-  bool get isInStock => stockStatus.toLowerCase() == 'in_stock';
+  bool get isInStock => true; // TODO: revert to `stockStatus.toLowerCase() == 'in_stock'` when API is ready
   bool get hasDiscount => discountPercentage != null && discountPercentage! > 0;
 
   String get formattedPrice => '₹${price.toStringAsFixed(0)}';

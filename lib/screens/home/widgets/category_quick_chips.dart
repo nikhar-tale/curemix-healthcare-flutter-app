@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../providers/product_provider.dart';
 import '../../search/search_screen.dart';
 
 class CategoryQuickChips extends StatelessWidget {
@@ -50,15 +48,10 @@ class CategoryQuickChips extends StatelessWidget {
   Widget buildCategoryItem(BuildContext context, Map<String, dynamic> category) {
     return GestureDetector(
       onTap: () {
-        // Automatically search when tapped
-        context.read<ProductProvider>().searchProducts(category['name']);
-        
-        // Push search screen directly if needed (or navigate to tab via state)
-        // A simple push works since the search screen has its own back button logic implicitly if pushed
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const SearchScreen(),
+            builder: (context) => SearchScreen(initialQuery: category['name']),
           ),
         );
       },
