@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../models/product_model.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../services/pdf_generator_service.dart';
+import '../../../core/utils/notification_helper.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -84,32 +85,17 @@ class _ProductCardState extends State<ProductCard>
                         borderRadius: BorderRadius.circular(20),
                         onTap: () async {
                           try {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Generating PDF...'),
-                                duration: Duration(seconds: 1),
-                              ),
+                            final file = await NotificationHelper.runWithSmoothProgress(
+                              title: 'Preparing PDF for Sharing...',
+                              task: () => PdfGeneratorService.generateProductPdf(widget.product),
                             );
-                            final file =
-                                await PdfGeneratorService.generateProductPdf(
-                                  widget.product,
-                                );
-                            if (!context.mounted) return;
+
                             await Share.shareXFiles(
                               [XFile(file.path)],
-                              text:
-                                  'Check out this product: ${widget.product.name}',
+                              text: 'Check out this product: ${widget.product.name}',
                             );
                           } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Could not share PDF at this time.',
-                                  ),
-                                ),
-                              );
-                            }
+                            print('Error sharing product PDF: $e');
                           }
                         },
                         child: Container(

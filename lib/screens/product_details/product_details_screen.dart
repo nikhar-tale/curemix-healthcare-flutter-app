@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/pdf_generator_service.dart';
+import '../../core/utils/notification_helper.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
@@ -37,71 +38,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             icon: const Icon(Icons.download),
             onPressed: () async {
               try {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Downloading PDF...')),
-                );
-                
-                final savedPath = await PdfGeneratorService.savePdfToDownloads(widget.product);
-                
-                if (!context.mounted) return;
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Saved to Downloads:\n$savedPath'),
-                    backgroundColor: Colors.green,
-                  ),
+                await NotificationHelper.runWithSmoothProgress(
+                  title: 'Downloading Product PDF...',
+                  task: () => PdfGeneratorService.savePdfToDownloads(widget.product),
                 );
               } catch (e) {
-                if (context.mounted) {
-                  final errorMessage = e.toString().replaceFirst('Exception: ', '');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(errorMessage),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                print('Error downloading product PDF: $e');
               }
             },
           ),
           IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () async {
-              try {
-                // Show a brief loading indicator (optional, if generation takes time)
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Preparing PDF for sharing...')),
-                );
-
-                final file = await PdfGeneratorService.generateProductPdf(
-                  widget.product,
-                );
-
-                if (!context.mounted) return;
-
-                await Share.shareXFiles([
-                  XFile(file.path),
-                ], text: 'Check out this product: ${widget.product.name}');
-              } catch (e) {
-                print('Error sharing product PDF: $e');
-                if (context.mounted) {
-                  final errorMessage = e.toString().replaceFirst('Exception: ', '');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Could not share: $errorMessage'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Added to wishlist')),
+              );
             },
           ),
-          // IconButton(
-          //   icon: const Icon(Icons.favorite_border),
-          //   onPressed: () {
-          //     // TODO: Implement wishlist
-          //   },
-          // ),
         ],
       ),
       body: Column(
@@ -143,9 +96,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         _buildPriceSection(),
                         const SizedBox(height: 16),
 
-                        // Stock & SKU
-                        _buildStockAndSku(),
-                        const SizedBox(height: 16),
+
 
                         // Categories
                         if (widget.product.categories.isNotEmpty)
@@ -389,65 +340,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  // Stock and SKU Section
-  Widget _buildStockAndSku() {
-    return Row(
-      children: [
-        // Stock Status
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: widget.product.isInStock
-                ? Colors.green.shade50
-                : Colors.red.shade50,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: widget.product.isInStock
-                  ? Colors.green.shade200
-                  : Colors.red.shade200,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                widget.product.isInStock ? Icons.check_circle : Icons.cancel,
-                size: 16,
-                color: widget.product.isInStock ? Colors.green : Colors.red,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                widget.product.isInStock ? 'In Stock' : 'Out of Stock',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: widget.product.isInStock
-                      ? Colors.green.shade700
-                      : Colors.red.shade700,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // SKU
-        if (widget.product.hasSku) ...[
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              'SKU: ${widget.product.sku}',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
 
   // Categories Section
   Widget _buildCategoriesSection() {
@@ -493,40 +385,138 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Description',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+        Row(
+          children: [
+            const Icon(Icons.description_outlined, size: 20, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text(
+              'Product Description',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Description Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Short Description (Highlights)
+              if (widget.product.shortDescription != null &&
+                  widget.product.shortDescription!.isNotEmpty) ...[
+                Text(
+                  _stripHtmlTags(widget.product.shortDescription!),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(),
+                ),
+              ],
+
+              // Full Description
+              if (widget.product.description.isNotEmpty)
+                Text(
+                  _stripHtmlTags(widget.product.description),
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.7,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              
+              if (widget.product.description.isEmpty && (widget.product.shortDescription == null || widget.product.shortDescription!.isEmpty))
+                const Text(
+                  'No description available for this product.',
+                  style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
 
-        // Short Description
-        if (widget.product.shortDescription != null &&
-            widget.product.shortDescription!.isNotEmpty) ...[
-          Text(
-            _stripHtmlTags(widget.product.shortDescription!),
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.5,
-              color: AppColors.textPrimary,
+        const SizedBox(height: 24),
+
+        // Specifications / More Info
+        Row(
+          children: [
+            const Icon(Icons.list_alt_outlined, size: 20, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text(
+              'Specifications',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
           ),
-          const SizedBox(height: 12),
-        ],
+          child: Column(
+            children: [
+              _buildSpecRow('SKU', widget.product.sku ?? 'N/A'),
+              const Divider(height: 24),
+              _buildSpecRow('Categories', widget.product.allCategoryNames.join(', ')),
+              const Divider(height: 24),
+              _buildSpecRow('Stock Status', widget.product.isInStock ? 'In Stock' : 'Out of Stock'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-        // Full Description
-        if (widget.product.description.isNotEmpty)
-          Text(
-            _stripHtmlTags(widget.product.description),
+  Widget _buildSpecRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(
+            label,
             style: TextStyle(
               fontSize: 14,
-              height: 1.6,
-              color: Colors.grey.shade700,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
             ),
           ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -632,24 +622,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ElevatedButton.icon(
               onPressed: () async {
                 try {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Preparing PDF...'),
-                      duration: Duration(seconds: 1),
-                    ),
+                  final file = await NotificationHelper.runWithSmoothProgress(
+                    title: 'Preparing PDF for Sharing...',
+                    task: () => PdfGeneratorService.generateProductPdf(widget.product),
                   );
-                  final file = await PdfGeneratorService.generateProductPdf(widget.product);
-                  if (!context.mounted) return;
-                  await Share.shareXFiles(
-                    [XFile(file.path)],
-                    text: 'Check out this product: ${widget.product.name}',
-                  );
+
+                  await Share.shareXFiles([
+                    XFile(file.path),
+                  ], text: 'Check out this product: ${widget.product.name}');
                 } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not share PDF.')),
-                    );
-                  }
+                  print('Error sharing product PDF: $e');
                 }
               },
               icon: const Icon(Icons.share, size: 18),

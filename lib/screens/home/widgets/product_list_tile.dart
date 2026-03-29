@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../models/product_model.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../services/pdf_generator_service.dart';
+import '../../../../core/utils/notification_helper.dart';
 
 class ProductListTile extends StatelessWidget {
   final Product product;
@@ -113,12 +116,37 @@ class ProductListTile extends StatelessWidget {
                         ],
                       ),
                       // Stock Status
-                      Icon(
-                        product.isInStock
-                            ? Icons.check_circle
-                            : Icons.cancel,
-                        color: product.isInStock ? Colors.green : Colors.red,
-                        size: 16,
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.share, size: 18, color: AppColors.primary),
+                            onPressed: () async {
+                              try {
+                                final file = await NotificationHelper.runWithSmoothProgress(
+                                  title: 'Preparing PDF for Sharing...',
+                                  task: () => PdfGeneratorService.generateProductPdf(product),
+                                );
+
+                                await Share.shareXFiles(
+                                  [XFile(file.path)],
+                                  text: 'Check out this product: ${product.name}',
+                                );
+                              } catch (e) {
+                                print('Error sharing product PDF: $e');
+                              }
+                            },
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            product.isInStock
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: product.isInStock ? Colors.green : Colors.red,
+                            size: 16,
+                          ),
+                        ],
                       ),
                     ],
                   ),

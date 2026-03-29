@@ -48,6 +48,9 @@ Future<void> main() async {
 class CuremixApp extends StatelessWidget {
   const CuremixApp({super.key});
 
+  // Global key to show notifications from anywhere (even across navigation)
+  static final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
+
   @override
   Widget build(BuildContext context) {
     // Wrap with MultiProvider for state management
@@ -56,6 +59,7 @@ class CuremixApp extends StatelessWidget {
       child: MaterialApp(
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
+        scaffoldMessengerKey: messengerKey,
 
         // Theme Configuration
         theme: ThemeData(
