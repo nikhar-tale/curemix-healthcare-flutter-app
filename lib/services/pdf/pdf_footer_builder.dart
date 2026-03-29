@@ -2,9 +2,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'pdf_constants.dart';
+import 'pdf_text_utils.dart';
 
 class PdfFooterBuilder {
-  static pw.Widget build(pw.Context context) {
+  static pw.Widget build(pw.Context context, {pw.Font? icons, pw.MemoryImage? playStoreLogo, pw.Font? fontRegular, pw.Font? fontBold}) {
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -21,19 +22,52 @@ class PdfFooterBuilder {
           child: pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.center,
             children: [
+              // 1. Play Store Logo (PNG from user)
+              if (playStoreLogo != null)
+                pw.Image(
+                  playStoreLogo,
+                  width: 18,
+                  height: 18,
+                )
+              else if (icons != null)
+                // Fallback to Icon if PNG fails to load
+                pw.Icon(
+                  const pw.IconData(0xe037), // play_arrow
+                  font: icons,
+                  size: 14,
+                  color: PdfColor.fromHex('#4CAF50'), // Store Green
+                ),
+              pw.SizedBox(width: 6),
               pw.Text(
-                'Available on Google Play | ',
+                PdfTextUtils.clean('Available on Google Play | '),
                 style: pw.TextStyle(
+                  font: fontBold,
                   fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColor.fromHex('#004D40'),
                 ),
               ),
               pw.Text(
-                'Download the Curemix App to explore our full range of products!',
+                PdfTextUtils.clean('Download to explore 1000+ products!'),
                 style: pw.TextStyle(
+                  font: fontRegular,
                   fontSize: 10,
                   color: PdfColor.fromHex('#004D40'),
+                ),
+              ),
+              pw.SizedBox(width: 10),
+              // Tiny Store QR Code
+              pw.Container(
+                padding: const pw.EdgeInsets.all(2),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.white,
+                  borderRadius: pw.BorderRadius.circular(2),
+                ),
+                child: pw.BarcodeWidget(
+                  barcode: pw.Barcode.qrCode(),
+                  data: PdfConstants.googlePlayUrl,
+                  width: 20,
+                  height: 20,
                 ),
               ),
             ],
@@ -68,28 +102,35 @@ class PdfFooterBuilder {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Scan to Order', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.white)),
+                      pw.Text(PdfTextUtils.clean('Scan to Order'), style: pw.TextStyle(font: fontBold, fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.white)),
                       pw.SizedBox(height: 2),
-                      pw.Text(PdfConstants.websiteUrl, style: pw.TextStyle(fontSize: 10, color: PdfColor.fromHex('#B2DFDB'))), // Light Teal Text
+                      pw.Text(PdfTextUtils.clean(PdfConstants.websiteUrl), style: pw.TextStyle(font: fontRegular, fontSize: 10, color: PdfColor.fromHex('#B2DFDB'))), // Light Teal Text
                     ]
                   )
                 ]
               ),
               
-              // Right: Branding & Pagination
-              pw.Column(
+                pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
                   pw.Text(
-                    'Curemix Healthcare - Trust & Care',
-                    style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+                  PdfTextUtils.clean('Curemix Healthcare - Trust & Care'),
+                  style: pw.TextStyle(
+                    font: fontBold,
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white, // Fixed: was #00796B (invisible on dark teal)
                   ),
-                  pw.SizedBox(height: 4),
-                  pw.Text(
-                    'Page ${context.pageNumber} of ${context.pagesCount}',
-                    style: pw.TextStyle(fontSize: 10, color: PdfColor.fromHex('#B2DFDB')),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  PdfTextUtils.clean('Address: 123 Pharma Park, Ahmedabad, Gujarat'),
+                  style: pw.TextStyle(
+                    font: fontRegular,
+                    fontSize: 8,
+                    color: PdfColor.fromHex('#B2DFDB'), // Light teal — visible on dark teal
                   ),
-                ]
+                ),]
               )
             ]
           )

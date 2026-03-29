@@ -2,9 +2,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'pdf_constants.dart';
+import 'pdf_text_utils.dart';
 
 class PdfHeaderBuilder {
-  static pw.Widget build(pw.MemoryImage? logo) {
+  static pw.Widget build(pw.MemoryImage? logo, {pw.Font? fontRegular, pw.Font? fontBold}) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 25),
       padding: const pw.EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -19,7 +20,14 @@ class PdfHeaderBuilder {
           pw.Row(
             children: [
               if (logo != null) ...[
-                pw.Image(logo, width: 45),
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(4),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(6),
+                  ),
+                  child: pw.Image(logo, width: 38, height: 38, fit: pw.BoxFit.contain),
+                ),
                 pw.SizedBox(width: 12),
               ],
               pw.Column(
@@ -28,6 +36,7 @@ class PdfHeaderBuilder {
                   pw.Text(
                     'Curemix Healthcare',
                     style: pw.TextStyle(
+                      font: fontBold,
                       fontSize: 18,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.white,
@@ -35,10 +44,11 @@ class PdfHeaderBuilder {
                   ),
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    PdfConstants.branchName,
+                    PdfTextUtils.clean(PdfConstants.branchName),
                     style: pw.TextStyle(
+                      font: fontBold,
                       fontSize: 11,
-                      fontWeight: pw.FontWeight.normal,
+                      fontWeight: pw.FontWeight.bold,
                       color: PdfColor.fromHex('#E0F2F1'),
                     ),
                   ), // Light Teal
@@ -50,8 +60,9 @@ class PdfHeaderBuilder {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                'WhatsApp: +${PdfConstants.branchPhone}',
+                PdfTextUtils.clean('WhatsApp: +${PdfConstants.branchPhone}'),
                 style: pw.TextStyle(
+                  font: fontBold,
                   fontSize: 11,
                   color: PdfColors.white,
                   fontWeight: pw.FontWeight.bold,
@@ -61,6 +72,7 @@ class PdfHeaderBuilder {
               pw.Text(
                 'Email: ${PdfConstants.branchEmail}',
                 style: pw.TextStyle(
+                  font: fontRegular,
                   fontSize: 10,
                   color: PdfColor.fromHex('#E0F2F1'),
                 ),

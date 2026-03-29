@@ -1,48 +1,46 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../models/product_model.dart';
+import 'pdf_text_utils.dart';
 
 class PdfTemplateBuilder {
 
-
-  static List<pw.Widget> buildProductPage(
-    Product product,
-    List<pw.ImageProvider> images,
-  ) {
+  static pw.Widget buildProductPage(Product product, List<pw.ImageProvider> images, {pw.Font? icons, pw.Font? fontRegular, pw.Font? fontBold}) {
     final mainImage = images.isNotEmpty ? images.first : null;
-    final String headlineInfo = product.category != null
-        ? product.category!.toUpperCase()
-        : 'Premium Healthcare Product';
-
-    return [
-      // Title Section
-      pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.only(bottom: 20),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              product.name,
-              style: pw.TextStyle(
-                fontSize: 26,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blue900,
+    final String headlineInfo = product.sku != null ? 'SKU: ${product.sku} | ${product.stockStatus.toUpperCase()}' : product.stockStatus.toUpperCase();
+    
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // 1. Title & Header
+        pw.Container(
+          margin: const pw.EdgeInsets.only(bottom: 20),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                PdfTextUtils.clean(product.name),
+                style: pw.TextStyle(
+                  font: fontBold,
+                  fontSize: 26,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blue900,
+                ),
               ),
-            ),
-            pw.SizedBox(height: 4),
-            pw.Text(
-              headlineInfo,
-              style: pw.TextStyle(
-                fontSize: 12,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey500,
-                letterSpacing: 1.2,
+              pw.SizedBox(height: 4),
+              pw.Text(
+                PdfTextUtils.clean(headlineInfo),
+                style: pw.TextStyle(
+                  font: fontBold,
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blueGrey500,
+                  letterSpacing: 1.2,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
 
       // Main Section (2 Columns)
       pw.Row(
@@ -73,7 +71,7 @@ class PdfTemplateBuilder {
                     child: pw.Center(
                       child: pw.Text(
                         "Image Not Available",
-                        style: const pw.TextStyle(color: PdfColors.grey),
+                        style: pw.TextStyle(font: fontRegular, color: PdfColors.grey),
                       ),
                     ),
                   ),
@@ -100,8 +98,9 @@ class PdfTemplateBuilder {
                       ),
                     ),
                     child: pw.Text(
-                      'PRODUCT DETAILS',
+                      PdfTextUtils.clean('PRODUCT DETAILS'),
                       style: pw.TextStyle(
+                        font: fontBold,
                         fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColors.blue900, // Teal/Blue Header Match
@@ -116,14 +115,15 @@ class PdfTemplateBuilder {
                     },
                     children: [
                       if (product.category != null && product.category!.isNotEmpty)
-                        _buildTableRow('Category', product.category!),
+                        _buildTableRow('Category', PdfTextUtils.clean(product.category!), font: fontRegular),
                       _buildTableRow(
                         'Availability',
                         product.isInStock ? 'In Stock' : 'Out of Stock',
+                        font: fontRegular,
                         valueColor: product.isInStock ? PdfColors.green700 : PdfColors.red700,
                       ),
                       if (product.price > 0)
-                        _buildTableRow('Price', 'Rs. ${product.price}', isHighlight: true),
+                        _buildTableRow('Price', 'Rs. ${product.price}', font: fontBold, isHighlight: true),
                     ],
                   ),
                 ],
@@ -156,6 +156,7 @@ class PdfTemplateBuilder {
                 child: pw.Text(
                   'MEDICAL INFORMATION / INDICATIONS',
                   style: pw.TextStyle(
+                    font: fontBold,
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.blue900, // Teal Match
@@ -164,8 +165,9 @@ class PdfTemplateBuilder {
               ),
               pw.SizedBox(height: 12),
               pw.Paragraph(
-                text: _cleanHtmlText(product.displayDescription),
-                style: const pw.TextStyle(
+                text: PdfTextUtils.clean(product.displayDescription),
+                style: pw.TextStyle(
+                  font: fontRegular,
                   fontSize: 11,
                   lineSpacing: 1.8,
                   color: PdfColors.blueGrey800,
@@ -176,7 +178,7 @@ class PdfTemplateBuilder {
         ),
       ],
 
-      // Gallery Section (Automatically breaks if needed by MultiPage, but attempts to pack on Page 1)
+      // Gallery Section
       if (images.length > 1) ...[
         pw.SizedBox(height: 25),
         pw.Container(
@@ -189,6 +191,7 @@ class PdfTemplateBuilder {
           child: pw.Text(
             'PRODUCT GALLERY',
             style: pw.TextStyle(
+              font: fontBold,
               fontSize: 14,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.blue900, // Teal Match
@@ -214,68 +217,39 @@ class PdfTemplateBuilder {
             );
           }).toList(),
         ),
-      ],
-    ];
-  }
+      ], // Close the if-spread list
+    ], // Close the Column children list
+  );
+}
 
-  static pw.TableRow _buildTableRow(
-    String label,
-    String value, {
-    bool isHighlight = false,
-    PdfColor valueColor = PdfColors.black,
-  }) {
+  static pw.TableRow _buildTableRow(String label, String value, {pw.Font? font, PdfColor? valueColor, bool isHighlight = false}) {
     return pw.TableRow(
       children: [
         pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 8),
           child: pw.Text(
             label,
             style: pw.TextStyle(
+              font: font,
+              fontSize: 10,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.blueGrey800,
-              fontSize: 11,
             ),
           ),
         ),
         pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 8),
           child: pw.Text(
             value,
             style: pw.TextStyle(
-              color: isHighlight ? PdfColors.green800 : valueColor,
+              font: font,
               fontSize: 11,
-              fontWeight: isHighlight
-                  ? pw.FontWeight.bold
-                  : pw.FontWeight.normal,
+              fontWeight: isHighlight ? pw.FontWeight.bold : pw.FontWeight.normal,
+              color: valueColor ?? (isHighlight ? PdfColors.blue900 : PdfColors.black),
             ),
           ),
         ),
       ],
     );
-  }
-
-  static String _cleanHtmlText(String htmlText) {
-    String text = htmlText.replaceAll(
-      RegExp(r'</p>|<br>|<br\s*/>', caseSensitive: false),
-      '\n\n',
-    );
-    text = text.replaceAll(RegExp(r'</li>', caseSensitive: false), '\n');
-    text = text.replaceAll(RegExp(r'<li>', caseSensitive: false), '• ');
-    text = text.replaceAll(
-      RegExp(r'<[^>]*>', multiLine: true, caseSensitive: true),
-      '',
-    );
-    text = text.replaceAll('&nbsp;', ' ');
-    text = text.replaceAll('&amp;', '&');
-    text = text.replaceAll('&lt;', '<');
-    text = text.replaceAll('&gt;', '>');
-    text = text.replaceAll('&quot;', '"');
-    text = text.replaceAll('&#8217;', "'");
-    text = text.replaceAll('&#8211;', "-");
-    text = text.replaceAll('&#8212;', "--");
-    text = text.replaceAll('&#8220;', '"');
-    text = text.replaceAll('&#8221;', '"');
-    text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n');
-    return text.trim();
   }
 }

@@ -14,11 +14,14 @@ import 'pdf_image_optimizer.dart';
 class ProductPdfService {
   static pw.Font? _cachedFontRegular;
   static pw.Font? _cachedFontBold;
+  static pw.Font? _cachedFontIcons;
   static pw.MemoryImage? _cachedLogo;
+  static pw.MemoryImage? _cachedPlayStoreLogo;
 
   static Future<void> _initResources() async {
     _cachedFontRegular ??= await PdfGoogleFonts.robotoRegular();
     _cachedFontBold ??= await PdfGoogleFonts.robotoBold();
+    _cachedFontIcons ??= await PdfGoogleFonts.materialIcons();
 
     if (_cachedLogo == null) {
       try {
@@ -27,6 +30,17 @@ class ProductPdfService {
         );
         _cachedLogo = pw.MemoryImage(bytes.buffer.asUint8List());
       } catch (e) {}
+    }
+
+    if (_cachedPlayStoreLogo == null) {
+      try {
+        final ByteData bytes = await rootBundle.load(
+          'assets/images/google_play.png',
+        );
+        _cachedPlayStoreLogo = pw.MemoryImage(bytes.buffer.asUint8List());
+      } catch (e) {
+        print('⚠️ [PDF Engine] Warning: Could not load google_play.png asset.');
+      }
     }
   }
 
@@ -42,6 +56,11 @@ class ProductPdfService {
     final theme = pw.ThemeData.withFont(
       base: _cachedFontRegular,
       bold: _cachedFontBold,
+    ).copyWith(
+      defaultTextStyle: pw.TextStyle(
+        font: _cachedFontRegular,
+        fontSize: 10,
+      ),
     );
 
     for (var product in products) {
@@ -90,11 +109,17 @@ class ProductPdfService {
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(32),
           theme: theme,
-          header: (pw.Context context) => PdfHeaderBuilder.build(_cachedLogo),
-          footer: (pw.Context context) => PdfFooterBuilder.build(context),
-          build: (pw.Context context) {
-            return PdfTemplateBuilder.buildProductPage(product, resolvedImages);
-          },
+          header: (context) => PdfHeaderBuilder.build(_cachedLogo, fontBold: _cachedFontBold, fontRegular: _cachedFontRegular),
+          footer: (context) => PdfFooterBuilder.build(context, icons: _cachedFontIcons, playStoreLogo: _cachedPlayStoreLogo, fontRegular: _cachedFontRegular, fontBold: _cachedFontBold),
+          build: (context) => [
+            PdfTemplateBuilder.buildProductPage(
+              product, 
+              resolvedImages, 
+              icons: _cachedFontIcons, 
+              fontRegular: _cachedFontRegular, 
+              fontBold: _cachedFontBold
+            ),
+          ],
         ),
       );
     }
