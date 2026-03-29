@@ -141,11 +141,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         const SizedBox(height: 16),
 
                         // Price Section
-                        // _buildPriceSection(),
+                        _buildPriceSection(),
                         const SizedBox(height: 16),
 
                         // Stock & SKU
-                        // _buildStockAndSku(),
+                        _buildStockAndSku(),
                         const SizedBox(height: 16),
 
                         // Categories
@@ -234,90 +234,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  // // Image Carousel Widget using PageView
-  // Widget _buildImageCarousel() {
-  //   final images = widget.product.images.isNotEmpty
-  //       ? widget.product.images
-  //       : [ProductImage(id: 0, src: widget.product.imageUrl)];
-
-  //   return Container(
-  //     color: Colors.grey.shade50,
-  //     height: 380,
-  //     child: Column(
-  //       children: [
-  //         Expanded(
-  //           child: PageView.builder(
-  //             controller: _pageController,
-  //             itemCount: images.length,
-  //             onPageChanged: (index) {
-  //               setState(() {
-  //                 _currentImageIndex = index;
-  //               });
-  //             },
-  //             itemBuilder: (context, index) {
-  //               return GestureDetector(
-  //                 onTap: () {
-  //                   // TODO: Open full screen image viewer
-  //                 },
-  //                 child: Padding(
-  //                   padding: const EdgeInsets.all(16),
-  //                   child: CachedNetworkImage(
-  //                     memCacheWidth: 400, // ✅ Resize for memory efficiency
-  //                     memCacheHeight: 400, // ✅ Resize for memory efficiency
-  //                     fadeInDuration: const Duration(
-  //                       milliseconds: 200,
-  //                     ), // ✅ Faster fade
-  //                     imageUrl: images[index].src,
-  //                     fit: BoxFit.contain,
-  //                     cacheKey: images[index].id.toString(),
-  //                     placeholder: (context, url) => Container(
-  //                       color: Colors.grey.shade200,
-  //                       child: const Center(
-  //                         child: CircularProgressIndicator(),
-  //                       ),
-  //                     ),
-  //                     errorWidget: (context, url, error) => Container(
-  //                       color: Colors.grey.shade200,
-  //                       child: const Icon(
-  //                         Icons.image_not_supported,
-  //                         size: 60,
-  //                         color: Colors.grey,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         ),
-
-  //         // Image Indicators
-  //         if (images.length > 1) ...[
-  //           const SizedBox(height: 12),
-  //           SmoothPageIndicator(
-  //             controller: _pageController,
-  //             count: images.length,
-  //             effect: WormEffect(
-  //               dotHeight: 8,
-  //               dotWidth: 8,
-  //               activeDotColor: AppColors.primary,
-  //               dotColor: Colors.grey.shade300,
-  //             ),
-  //             onDotClicked: (index) {
-  //               _pageController.animateToPage(
-  //                 index,
-  //                 duration: const Duration(milliseconds: 300),
-  //                 curve: Curves.easeIn,
-  //               );
-  //             },
-  //           ),
-  //           const SizedBox(height: 16),
-  //         ],
-  //       ],
-  //     ),
-  //   );
-  // }
-
   // Rating Section
   Widget _buildRatingSection() {
     return Row(
@@ -330,7 +246,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         ),
         const SizedBox(width: 4),
         Text(
-          '(${widget.product.totalSales ?? 0} reviews)',
+          '(${widget.product.totalSales ?? 0} sold)',
           style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
       ],
