@@ -52,12 +52,16 @@ dependencies:
   
   # Navigation
   go_router: ^13.0.0
-  flutter_cache_manager: ^3.3.1  # ✅ Add if not present
+  flutter_cache_manager: ^3.4.1  # ✅ Add if not present
   # flutter_carousel_widget: ^2.0.0
   smooth_page_indicator: ^1.1.0  # For carousel dots
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   photo_view: ^0.15.0
+  pdf: ^3.12.0
+  path_provider: ^2.1.5
+  share_plus: ^12.0.1
+  printing: ^5.14.3
   
 
 

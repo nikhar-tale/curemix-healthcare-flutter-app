@@ -3,8 +3,10 @@ import 'package:curemix_healtcare_flutter_app/widgets/product_image_gallery.dart
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/pdf_generator_service.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
@@ -32,12 +34,69 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       appBar: AppBar(
         title: const Text('Product Details'),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.share_outlined),
-          //   onPressed: () {
-          //     // TODO: Implement share
-          //   },
-          // ),
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () async {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Downloading PDF...')),
+                );
+                
+                final savedPath = await PdfGeneratorService.savePdfToDownloads(widget.product);
+                
+                if (!context.mounted) return;
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Saved to Downloads:\n$savedPath'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                if (context.mounted) {
+                  final errorMessage = e.toString().replaceFirst('Exception: ', '');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(errorMessage),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () async {
+              try {
+                // Show a brief loading indicator (optional, if generation takes time)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Preparing PDF for sharing...')),
+                );
+
+                final file = await PdfGeneratorService.generateProductPdf(
+                  widget.product,
+                );
+
+                if (!context.mounted) return;
+
+                await Share.shareXFiles([
+                  XFile(file.path),
+                ], text: 'Check out this product: ${widget.product.name}');
+              } catch (e) {
+                print('Error sharing product PDF: $e');
+                if (context.mounted) {
+                  final errorMessage = e.toString().replaceFirst('Exception: ', '');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Could not share: $errorMessage'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
           // IconButton(
           //   icon: const Icon(Icons.favorite_border),
           //   onPressed: () {
