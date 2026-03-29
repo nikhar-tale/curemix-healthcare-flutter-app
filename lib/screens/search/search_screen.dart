@@ -6,6 +6,7 @@ import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../product_details/product_details_screen.dart';
 import '../home/widgets/product_card.dart';
+import '../home/widgets/product_list_tile.dart';
 import '../../widgets/custom_app_bar.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -18,11 +19,14 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  
+  bool _isListView = true;
+  String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'In Stock', 'Tablets', 'Syrups', 'Creams', 'Injections'];
 
   @override
   void initState() {
     super.initState();
-    // Clear search when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().clearSearch();
     });
@@ -36,10 +40,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onSearchChanged(String query) {
-    // Cancel previous timer
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    // Wait 500ms after user stops typing before searching
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.trim().isNotEmpty) {
         context.read<ProductProvider>().searchProducts(query.trim());
@@ -64,16 +66,32 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  List<Product> _applyLocalFilters(List<Product> products) {
+    if (_selectedFilter == 'All') return products;
+    if (_selectedFilter == 'In Stock') {
+      return products.where((p) => p.isInStock).toList();
+    }
+    // For category filters
+    return products.where((p) {
+      final cat = p.category?.toLowerCase() ?? '';
+      return cat.contains(_selectedFilter.toLowerCase());
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const CustomAppBar(),
       body: Column(
         children: [
-          // Search Bar
+          // 1. Search Bar
           _buildSearchBar(),
+          
+          // 2. Filter Pills
+          _buildFilterPills(),
 
-          // Search Results
+          // 3. Search Results
           Expanded(
             child: Consumer<ProductProvider>(
               builder: (context, provider, child) {
@@ -86,35 +104,38 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // Search Bar Widget
   Widget _buildSearchBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      color: Colors.white,
       child: TextField(
         controller: _searchController,
         autofocus: false,
         decoration: InputDecoration(
-          hintText: 'Search for products...',
+          hintText: 'Search by formulation or brand...',
+           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: const Icon(
             Icons.search,
             color: AppColors.primary,
           ),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_searchController.text.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 20),
                   onPressed: _clearSearch,
-                )
-              : null,
+                ),
+              IconButton(
+                icon: const Icon(Icons.qr_code_scanner, color: AppColors.primary),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Barcode scanner coming soon!')),
+                  );
+                },
+              ),
+            ],
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -129,31 +150,61 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         ),
         onChanged: (value) {
-          setState(() {}); // Rebuild to show/hide clear button
+          setState(() {}); 
           _onSearchChanged(value);
         },
       ),
     );
   }
 
-  // Search Results Widget
-  Widget _buildSearchResults(ProductProvider provider) {
-    // Initial State - No search yet
-    if (_searchController.text.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.search,
-        title: 'Start Searching',
-        message: 'Search for medicines, supplements, and healthcare products',
-      );
-    }
+  Widget _buildFilterPills() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SizedBox(
+        height: 36,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: _filters.length,
+          itemBuilder: (context, index) {
+            final filter = _filters[index];
+            final isSelected = _selectedFilter == filter;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(filter),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedFilter = selected ? filter : 'All';
+                  });
+                },
+                selectedColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: Colors.grey.shade100,
+                labelStyle: TextStyle(
+                  color: isSelected ? AppColors.primary : Colors.grey.shade700,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+                side: BorderSide(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 
-    // Loading State
+  Widget _buildSearchResults(ProductProvider provider) {
     if (provider.isSearching) {
       return const Center(
         child: Column(
@@ -162,19 +213,15 @@ class _SearchScreenState extends State<SearchScreen> {
             CircularProgressIndicator(),
             SizedBox(height: 16),
             Text(
-              'Searching...',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              'Searching databases...',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
             ),
           ],
         ),
       );
     }
 
-    // Error State
-    if (provider.searchError != null) {
+    if (provider.searchError != null && _searchController.text.isNotEmpty) {
       return _buildEmptyState(
         icon: Icons.error_outline,
         title: 'Search Failed',
@@ -182,67 +229,100 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // No Results Found
-    if (provider.searchResults.isEmpty && _searchController.text.isNotEmpty) {
-      return _buildEmptyState(
-        icon: Icons.search_off,
-        title: 'No Results Found',
-        message: 'Try searching with different keywords',
-      );
+    // Default to the full catalog if no query is entered
+    final List<Product> sourceList = _searchController.text.isEmpty 
+        ? provider.products 
+        : provider.searchResults;
+
+    final filteredResults = _applyLocalFilters(sourceList);
+
+    if (filteredResults.isEmpty) {
+      if (_searchController.text.isNotEmpty) {
+        return _buildEmptyState(
+          icon: Icons.search_off,
+          title: 'No Results Found',
+          message: 'No products matched your search and filters.',
+        );
+      } else {
+        return _buildEmptyState(
+          icon: Icons.inventory_2_outlined,
+          title: 'Empty Catalog',
+          message: 'No products available to display.',
+        );
+      }
     }
 
-    // Results Found
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Results Count
-        Padding(
-          padding: const EdgeInsets.all(16),
+        // Controls Row
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.white,
           child: Row(
             children: [
               Text(
-                'Found ${provider.searchResults.length} product${provider.searchResults.length != 1 ? 's' : ''}',
+                'Found ${filteredResults.length} product${filteredResults.length != 1 ? 's' : ''}',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const Spacer(),
-              TextButton.icon(
-                onPressed: () => _onSearchChanged(_searchController.text),
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Refresh'),
+              // Grid vs List Toggle
+              IconButton(
+                icon: Icon(
+                  _isListView ? Icons.grid_view : Icons.view_list,
+                  color: AppColors.textPrimary,
+                  size: 20,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isListView = !_isListView;
+                  });
+                },
               ),
             ],
           ),
         ),
-
-        // Results Grid
+        
+        // Dynamic List or Grid
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.68,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: provider.searchResults.length,
-            itemBuilder: (context, index) {
-              final product = provider.searchResults[index];
-              return ProductCard(
-                product: product,
-                onTap: () => _navigateToProductDetails(product),
-              );
-            },
-          ),
+          child: _isListView
+              ? ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: filteredResults.length,
+                  itemBuilder: (context, index) {
+                    final product = filteredResults[index];
+                    return ProductListTile(
+                      product: product,
+                      onTap: () => _navigateToProductDetails(product),
+                    );
+                  },
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.68,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: filteredResults.length,
+                  itemBuilder: (context, index) {
+                    final product = filteredResults[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () => _navigateToProductDetails(product),
+                    );
+                  },
+                ),
         ),
       ],
     );
   }
 
-  // Empty State Widget
   Widget _buildEmptyState({
     required IconData icon,
     required String title,

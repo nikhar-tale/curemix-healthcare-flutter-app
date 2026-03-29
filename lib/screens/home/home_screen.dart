@@ -1,7 +1,6 @@
-import 'package:curemix_healtcare_flutter_app/models/product_model.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/product_model.dart';
 import '../../providers/product_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../product_details/product_details_screen.dart';

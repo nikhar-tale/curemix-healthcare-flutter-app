@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../providers/product_provider.dart';
 import '../../search/search_screen.dart';
-import '../../main_screen.dart'; // We may need a way to switch tabs if we redirect
 
 class CategoryQuickChips extends StatelessWidget {
   const CategoryQuickChips({super.key});
