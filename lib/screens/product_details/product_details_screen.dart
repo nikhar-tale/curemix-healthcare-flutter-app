@@ -162,7 +162,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         // Description
                         _buildDescriptionSection(),
 
-                        const SizedBox(height: 80), // Space for fixed button
+                        const SizedBox(height: 16), // Small buffer for bottom bar
                       ],
                     ),
                   ),
@@ -171,8 +171,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ),
 
-          // Fixed Add to Cart Button
-          // _buildAddToCartButton(),
+          // Sticky Bottom Bar
+          _buildStickyBottomBar(),
         ],
       ),
     );
@@ -452,59 +452,139 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  // Add to Cart Button
-  Widget _buildAddToCartButton() {
+  // Sticky Bottom Bar
+  Widget _buildStickyBottomBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: widget.product.isInStock
-                ? () {
-                    // TODO: Add to cart functionality
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${widget.product.name} added to cart'),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
+        top: false,
+        child: Row(
+          children: [
+            // Price
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.product.mrp != null && widget.product.hasDiscount)
+                    Text(
+                      widget.product.formattedMrp,
+                      style: TextStyle(
+                        fontSize: 12,
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey.shade500,
                       ),
-                    );
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                    ),
+                  Row(
+                    children: [
+                      Text(
+                        widget.product.formattedPrice,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      if (widget.product.hasDiscount) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${widget.product.discountPercentage}% OFF',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.shopping_cart, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  widget.product.isInStock
-                      ? 'Add to Cart - ${widget.product.formattedPrice}'
-                      : 'Out of Stock',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+
+            const SizedBox(width: 12),
+
+            // Stock Badge (compact)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: widget.product.isInStock
+                    ? Colors.green.shade50
+                    : Colors.red.shade50,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: widget.product.isInStock
+                      ? Colors.green.shade300
+                      : Colors.red.shade300,
                 ),
-              ],
+              ),
+              child: Text(
+                widget.product.isInStock ? 'In Stock' : 'Out',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: widget.product.isInStock
+                      ? Colors.green.shade700
+                      : Colors.red.shade700,
+                ),
+              ),
             ),
-          ),
+
+            const SizedBox(width: 12),
+
+            // Share Button (primary action)
+            ElevatedButton.icon(
+              onPressed: () async {
+                try {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Preparing PDF...'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                  final file = await PdfGeneratorService.generateProductPdf(widget.product);
+                  if (!context.mounted) return;
+                  await Share.shareXFiles(
+                    [XFile(file.path)],
+                    text: 'Check out this product: ${widget.product.name}',
+                  );
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not share PDF.')),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.share, size: 18),
+              label: const Text('Share'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
