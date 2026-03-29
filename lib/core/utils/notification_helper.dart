@@ -11,9 +11,10 @@ class NotificationHelper {
     required Future<T> Function() task,
     double initialProgress = 0.1,
     double maxAutoProgress = 0.9,
+    VoidCallback? onViewPdf,
   }) async {
     final progressNotifier = ValueNotifier<double>(initialProgress);
-    showProgressSnackBar(title: title, progressNotifier: progressNotifier);
+    showProgressSnackBar(title: title, progressNotifier: progressNotifier, onViewPdf: onViewPdf);
 
     bool isTaskDone = false;
     
@@ -57,6 +58,7 @@ class NotificationHelper {
   static void showProgressSnackBar({
     required String title,
     required ValueNotifier<double> progressNotifier,
+    VoidCallback? onViewPdf,
   }) {
     final messenger = CuremixApp.messengerKey.currentState;
     if (messenger == null) return;
@@ -102,14 +104,28 @@ class NotificationHelper {
                           ),
                         ),
                       ),
-                      if (isDone)
+                      if (isDone) ...[
+                        if (onViewPdf != null)
+                          TextButton.icon(
+                            icon: const Icon(Icons.visibility_rounded, size: 16),
+                            label: const Text('View PDF'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              messenger.hideCurrentSnackBar();
+                              onViewPdf();
+                            },
+                          ),
                         IconButton(
                           icon: const Icon(Icons.close, size: 18),
                           onPressed: () => messenger.hideCurrentSnackBar(),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                        )
-                      else
+                        ),
+                      ] else
                         Text(
                           '${(progress * 100).toInt()}%',
                           style: const TextStyle(

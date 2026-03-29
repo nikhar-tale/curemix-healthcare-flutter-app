@@ -11,7 +11,7 @@ class PdfGeneratorService {
     return await ProductPdfService.generatePdf([product]);
   }
 
-  static Future<String> savePdfToDownloads(Product product) async {
+  static Future<File> savePdfToDownloads(Product product) async {
     try {
       final saveStopwatch = Stopwatch()..start();
       print('🚀 [Download Service] Initiating PDF download request...');
@@ -55,7 +55,7 @@ class PdfGeneratorService {
       
       saveStopwatch.stop();
       print('💾 [Download Service] Successfully copied to public downloads in ${saveStopwatch.elapsedMilliseconds}ms.');
-      return savedFile.path;
+      return savedFile;
       
     } on FileSystemException catch (e) {
       if (e.message.toLowerCase().contains('permission denied')) {

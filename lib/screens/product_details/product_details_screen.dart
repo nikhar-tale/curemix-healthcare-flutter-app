@@ -3,10 +3,12 @@ import 'package:curemix_healtcare_flutter_app/widgets/product_image_gallery.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/pdf_generator_service.dart';
 import '../../core/utils/notification_helper.dart';
+import '../pdf_viewer/pdf_viewer_screen.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
@@ -38,12 +40,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             icon: const Icon(Icons.download),
             onPressed: () async {
               try {
-                await NotificationHelper.runWithSmoothProgress(
+                // Step 1: Run with smooth progress animation (no viewer yet — file not ready)
+                final savedFile = await NotificationHelper.runWithSmoothProgress<File>(
                   title: 'Downloading Product PDF...',
                   task: () => PdfGeneratorService.savePdfToDownloads(widget.product),
                 );
+
+                // Step 2: File is ready — replace snackbar with one that has the View button
+                if (context.mounted) {
+                  NotificationHelper.showProgressSnackBar(
+                    title: 'Download Complete!',
+                    progressNotifier: ValueNotifier(1.0),
+                    onViewPdf: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PdfViewerScreen(
+                            pdfFile: savedFile,
+                            productName: widget.product.name,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }
               } catch (e) {
-                print('Error downloading product PDF: $e');
+                if (context.mounted) {
+                  NotificationHelper.showNotification(
+                    'Failed to generate PDF. Please try again.',
+                    isError: true,
+                  );
+                }
+                debugPrint('Error downloading product PDF: $e');
               }
             },
           ),
