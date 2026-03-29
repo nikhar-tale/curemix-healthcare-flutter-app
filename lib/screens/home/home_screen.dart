@@ -112,6 +112,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // 3. Dynamic Products Body
                 _buildSliverBody(provider),
+                
+                // 4. Paginated Loading Footer
+                if (provider.isLoadingMore)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.0),
+                      child: Center(
+                        child: SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // 5. Paginated Error Footer (Retry logic)
+                if (provider.hasError && provider.hasProducts && !provider.isLoadingMore)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Failed to connect to server', style: TextStyle(color: Colors.red)),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: () => provider.fetchProducts(context: context, loadMore: true),
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Tap to Retry', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -197,16 +232,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            // Show loading indicator at bottom for pagination
-            if (index >= provider.products.length) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-
             final Product product = provider.products[index];
             return ProductCard(
               key: ValueKey(product.id),
@@ -214,8 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => _navigateToProductDetails(product),
             );
           },
-          childCount: provider.products.length +
-              (provider.isLoading && provider.hasProducts ? 2 : 0),
+          childCount: provider.products.length,
         ),
       ),
     );

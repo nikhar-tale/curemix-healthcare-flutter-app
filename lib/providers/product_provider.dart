@@ -19,6 +19,11 @@ class ProductProvider extends ChangeNotifier {
   bool _isSearching = false;
   String? _searchError;
   String _lastSearchQuery = '';
+  
+  // Search Pagination State
+  int _searchCurrentPage = 1;
+  bool _hasMoreSearchResults = false;
+  bool _isLoadingMoreSearch = false;
 
   int _currentPage = 1;
   bool _hasMoreProducts = true;
@@ -34,11 +39,14 @@ class ProductProvider extends ChangeNotifier {
   // Add getters
   int get currentPage => _currentPage;
   bool get hasMoreProducts => _hasMoreProducts;
+  bool get isLoadingMore => _isLoadingMore;
 
   // ✅ ADD THESE getters
   List<Product> get searchResults => _searchResults;
   bool get isSearching => _isSearching;
   String? get searchError => _searchError;
+  bool get isLoadingMoreSearch => _isLoadingMoreSearch;
+  bool get hasMoreSearchResults => _hasMoreSearchResults;
 
   Future<void> _precacheProductImages(
     BuildContext context,
@@ -128,11 +136,13 @@ class ProductProvider extends ChangeNotifier {
       if (response.success && response.data != null) {
         if (loadMore) {
           _products.addAll(response.data!);
+          // ✅ Merge paginated items into local cache without wiping
+          await _cacheService.saveProducts(response.data!, clearFirst: false);
         } else {
           _products = response.data!;
 
-          // ✅ Save to cache (only on initial load)
-          await _cacheService.saveProducts(_products);
+          // ✅ Save fresh data to cache, wiping old
+          await _cacheService.saveProducts(_products, clearFirst: true);
           if (kDebugMode) {
             print('🔵 Saved ${_products.length} products to cache');
           }
@@ -316,57 +326,85 @@ class ProductProvider extends ChangeNotifier {
   //     return nameMatch || descMatch || categoryMatch || skuMatch;
   //   }).toList();
   // }
-  // ✅ Search products via API
-  Future<void> searchProducts(String query) async {
+  // ✅ Search products via API (with Pagination)
+  Future<void> searchProducts(String query, {bool loadMore = false}) async {
     // If query is empty, clear results
     if (query.trim().isEmpty) {
+      clearSearch();
+      return;
+    }
+
+    // Avoid duplicate searches or overlapping loads
+    if (query == _lastSearchQuery && _isSearching && !loadMore) return;
+    if (loadMore && _isLoadingMoreSearch) return;
+    if (loadMore && !_hasMoreSearchResults) return;
+    
+    if (!loadMore) {
+      _lastSearchQuery = query;
+      _isSearching = true;
+      _searchCurrentPage = 1;
+      _hasMoreSearchResults = false;
       _searchResults = [];
-      _lastSearchQuery = '';
-      _searchError = null;
-      notifyListeners();
-      return;
+    } else {
+      _isLoadingMoreSearch = true;
     }
-
-    // Avoid duplicate searches
-    if (query == _lastSearchQuery && _isSearching) {
-      return;
-    }
-
-    _lastSearchQuery = query;
-    _isSearching = true;
+    
     _searchError = null;
     notifyListeners();
 
     try {
       if (kDebugMode) {
-        print('🔍 Searching for: $query');
+        print('🔍 Searching for: $query, page: $_searchCurrentPage');
       }
 
       final response = await _apiService.searchProducts(
         query,
-        page: 1,
-        perPage: 50, // Get more results for search
+        page: _searchCurrentPage,
+        perPage: 20, // 20 results per page for search
       );
 
+      // ✅ Race Condition Guard: If the user typed a new query while this one was executing,
+      // discard this response immediately to prevent UI from showing mismatched results.
+      if (!loadMore && _lastSearchQuery != query) {
+        if (kDebugMode) print('🔍 Discarding stale search results for: $query');
+        return;
+      }
+
       if (response.success && response.data != null) {
-        _searchResults = response.data!;
+        if (loadMore) {
+          _searchResults.addAll(response.data!);
+        } else {
+          _searchResults = response.data!;
+        }
+        
+        _hasMoreSearchResults = response.data!.length >= 20;
+
+        if (loadMore) {
+          _searchCurrentPage++;
+        } else if (_hasMoreSearchResults) {
+           _searchCurrentPage++;
+        }
         _searchError = null;
 
         if (kDebugMode) {
-          print('🔍 Found ${_searchResults.length} results');
+          print('🔍 Found ${_searchResults.length} total results. HasMore: $_hasMoreSearchResults');
         }
       } else {
-        _searchResults = [];
+        if (!loadMore) _searchResults = [];
         _searchError = response.message;
       }
     } catch (e) {
       if (kDebugMode) {
         print('🔴 Search error: $e');
       }
-      _searchResults = [];
+      if (!loadMore) _searchResults = [];
       _searchError = 'Search failed. Please try again.';
     } finally {
-      _isSearching = false;
+      if (loadMore) {
+        _isLoadingMoreSearch = false;
+      } else {
+        _isSearching = false;
+      }
       notifyListeners();
     }
   }
@@ -377,6 +415,9 @@ class ProductProvider extends ChangeNotifier {
     _lastSearchQuery = '';
     _searchError = null;
     _isSearching = false;
+    _searchCurrentPage = 1;
+    _hasMoreSearchResults = false;
+    _isLoadingMoreSearch = false;
     notifyListeners();
   }
 

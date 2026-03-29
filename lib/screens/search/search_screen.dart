@@ -20,6 +20,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _debounce;
   
   bool _isListView = true;
@@ -28,6 +29,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
         _searchController.text = widget.initialQuery!;
@@ -38,9 +40,24 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final pixels = _scrollController.position.pixels;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+
+    if (pixels >= maxScroll * 0.8) {
+      final provider = context.read<ProductProvider>();
+      if (!provider.isSearching && !provider.isLoadingMoreSearch && provider.hasMoreSearchResults) {
+        provider.searchProducts(_searchController.text, loadMore: true);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -238,7 +255,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    if (provider.searchError != null && _searchController.text.isNotEmpty) {
+    if (provider.searchError != null && _searchController.text.isNotEmpty && provider.searchResults.isEmpty) {
       return _buildEmptyState(
         icon: Icons.error_outline,
         title: 'Search Failed',
@@ -308,6 +325,7 @@ class _SearchScreenState extends State<SearchScreen> {
         Expanded(
           child: _isListView
               ? ListView.builder(
+                  controller: _scrollController,
                   padding: EdgeInsets.zero,
                   itemCount: filteredResults.length,
                   itemBuilder: (context, index) {
@@ -320,6 +338,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                 )
               : GridView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -338,6 +357,37 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                 ),
         ),
+        
+        // Paginated Loading Footer
+        if (provider.isLoadingMoreSearch)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          
+        // Paginated Error Footer
+        if (provider.searchError != null && provider.searchResults.isNotEmpty && !provider.isLoadingMoreSearch)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(provider.searchError!, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => provider.searchProducts(_searchController.text, loadMore: true),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Tap to Retry', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

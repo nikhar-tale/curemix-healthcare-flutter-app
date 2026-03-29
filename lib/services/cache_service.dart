@@ -9,14 +9,18 @@ class CacheService {
   // Get products box
   Box<Product> get _productsBox => Hive.box<Product>('products');
 
-  // Save products to cache
-  Future<void> saveProducts(List<Product> products) async {
-    await _productsBox.clear(); // Clear old data
-    
-    // Save with product ID as key
-    for (var product in products) {
-      await _productsBox.put(product.id, product);
+  // Save products to cache (merges by default)
+  Future<void> saveProducts(List<Product> products, {bool clearFirst = false}) async {
+    if (clearFirst) {
+      await _productsBox.clear(); // Clear old data if fresh reload
     }
+    
+    // Save efficiently with putAll mapping ID to product
+    final Map<String, Product> productMap = {
+      for (var product in products) product.id: product,
+    };
+    
+    await _productsBox.putAll(productMap);
   }
 
   // Get cached products in reverse order
