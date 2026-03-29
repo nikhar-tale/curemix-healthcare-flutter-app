@@ -6,6 +6,7 @@ import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../product_details/product_details_screen.dart';
 import '../home/widgets/product_card.dart';
+import '../../widgets/custom_app_bar.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -66,9 +67,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Search Products'),
-      // ),
+      appBar: const CustomAppBar(),
       body: Column(
         children: [
           // Search Bar

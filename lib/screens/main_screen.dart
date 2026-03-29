@@ -1,4 +1,3 @@
-import 'package:curemix_healtcare_flutter_app/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import 'home/home_screen.dart';
@@ -22,7 +21,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(),
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
