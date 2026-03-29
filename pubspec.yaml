@@ -99,6 +99,7 @@ flutter:
     # - assets/images/curemix_logo.png
     - assets/images/curemix_logo.webp
     - assets/images/google_play.png
+    - assets/images/app_icon_v1.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

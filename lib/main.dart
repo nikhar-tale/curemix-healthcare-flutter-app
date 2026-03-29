@@ -25,11 +25,24 @@ Future<void> main() async {
 
   // ✅ Open products box
   // await Hive.openBox<Product>('products');
-  // Set preferred orientations (portrait only)
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Set preferred orientations
+  // Allow all for tablets, portrait only for phones
+  final double screenWidth = WidgetsBinding.instance.platformDispatcher.views.first.physicalSize.width / 
+                             WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+  
+  if (screenWidth >= 600) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  } else {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(

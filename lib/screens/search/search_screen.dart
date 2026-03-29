@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../product_details/product_details_screen.dart';
 import '../home/widgets/product_card.dart';
 import '../home/widgets/product_list_tile.dart';
+import '../../core/utils/responsive_helper.dart';
 import '../../widgets/custom_app_bar.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -122,14 +123,14 @@ class _SearchScreenState extends State<SearchScreen> {
           return Column(
             children: [
               // 1. Search Bar
-              _buildSearchBar(),
+              _buildSearchBar(context),
               
               // 2. Filter Pills
-              _buildFilterPills(dynamicFilters),
+              _buildFilterPills(context, dynamicFilters),
 
               // 3. Search Results
               Expanded(
-                child: _buildSearchResults(provider),
+                child: _buildSearchResults(context, provider),
               ),
             ],
           );
@@ -138,12 +139,19 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(BuildContext context) {
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.fromLTRB(16, isTablet ? 24 : 16, 16, 8),
       color: Colors.white,
-      child: TextField(
-        controller: _searchController,
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isTablet ? 700 : double.infinity,
+        ),
+        child: TextField(
+          controller: _searchController,
         autofocus: false,
         decoration: InputDecoration(
           hintText: 'Search by formulation or brand...',
@@ -191,54 +199,64 @@ class _SearchScreenState extends State<SearchScreen> {
           _onSearchChanged(value);
         },
       ),
+    ),
     );
   }
 
-  Widget _buildFilterPills(List<String> filters) {
+  Widget _buildFilterPills(BuildContext context, List<String> filters) {
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.only(bottom: 12),
-      child: SizedBox(
-        height: 36,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: filters.length,
-          itemBuilder: (context, index) {
-            final filter = filters[index];
-            final isSelected = _selectedFilter == filter;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(filter),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedFilter = selected ? filter : 'All';
-                  });
-                },
-                selectedColor: AppColors.primary.withOpacity(0.1),
-                backgroundColor: Colors.grey.shade100,
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.primary : Colors.grey.shade700,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 13,
-                ),
-                side: BorderSide(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            );
-          },
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isTablet ? 800 : double.infinity,
+          ),
+          child: SizedBox(
+            height: isTablet ? 42 : 36,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: filters.length,
+              itemBuilder: (context, index) {
+                final filter = filters[index];
+                final isSelected = _selectedFilter == filter;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(filter),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedFilter = selected ? filter : 'All';
+                      });
+                    },
+                    selectedColor: AppColors.primary.withOpacity(0.1),
+                    backgroundColor: Colors.grey.shade100,
+                    labelStyle: TextStyle(
+                      color: isSelected ? AppColors.primary : Colors.grey.shade700,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: isTablet ? 15 : 13,
+                    ),
+                    side: BorderSide(
+                      color: isSelected ? AppColors.primary : Colors.transparent,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSearchResults(ProductProvider provider) {
+  Widget _buildSearchResults(BuildContext context, ProductProvider provider) {
     if (provider.isSearching) {
       return const Center(
         child: Column(
@@ -340,11 +358,11 @@ class _SearchScreenState extends State<SearchScreen> {
               : GridView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.68,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveHelper.getGridColumnCount(context),
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
                   ),
                   itemCount: filteredResults.length,
                   itemBuilder: (context, index) {

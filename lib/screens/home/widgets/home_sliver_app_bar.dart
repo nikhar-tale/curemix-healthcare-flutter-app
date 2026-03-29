@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../../core/constants/app_colors.dart';
 
 class HomeSliverAppBar extends StatelessWidget {
@@ -6,21 +7,23 @@ class HomeSliverAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+    
     return SliverAppBar(
       backgroundColor: Colors.white,
       elevation: 2,
       forceElevated: true,
       pinned: true,
       floating: true,
-      expandedHeight: 60.0,
-      title: Row(
-        children: [
-          Image.asset(
-            'assets/images/curemix_logo.webp',
-            height: 35,
-            fit: BoxFit.contain,
-          ),
-        ],
+      expandedHeight: isTablet ? 80.0 : 60.0,
+      toolbarHeight: isTablet ? 80.0 : 56.0,
+      centerTitle: true,
+      leading: const SizedBox(),
+      leadingWidth: isTablet ? 0 : 96, // On tablet we don't need to balance as much if sidebar is there, but for consistency let's match
+      title: Image.asset(
+        'assets/images/curemix_logo.webp',
+        height: isTablet ? 60 : 45,
+        fit: BoxFit.contain,
       ),
       actions: [
         IconButton(

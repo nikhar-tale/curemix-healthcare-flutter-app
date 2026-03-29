@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../providers/product_provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/responsive_helper.dart';
 import '../product_details/product_details_screen.dart';
 import 'widgets/product_card.dart';
 import 'widgets/product_shimmer.dart';
@@ -88,25 +89,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // 2. Dashboard Widgets (Carousel & Categories)
                 SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      SizedBox(height: 8),
-                      HeroCarousel(),
-                      SizedBox(height: 8),
-                      CategoryQuickChips(),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Text(
-                          'Our Products',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          SizedBox(height: 8),
+                          HeroCarousel(),
+                          SizedBox(height: 8),
+                          CategoryQuickChips(),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Text(
+                              'Our Products',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
 
@@ -224,8 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: ResponsiveHelper.getGridColumnCount(context),
           childAspectRatio: 0.68,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,

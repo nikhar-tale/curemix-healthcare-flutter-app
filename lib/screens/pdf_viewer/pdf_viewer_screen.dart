@@ -4,6 +4,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 
+import '../../core/utils/responsive_helper.dart';
 import '../../core/constants/app_colors.dart';
 
 class PdfViewerScreen extends StatefulWidget {
@@ -36,6 +37,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+    
     return Scaffold(
       backgroundColor: Colors.grey.shade800,
 
@@ -45,21 +48,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
-              titleSpacing: 0,
+              centerTitle: true,
               title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Product Brochure',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: isTablet ? 20 : 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                   Text(
                     widget.productName,
-                    style: const TextStyle(fontSize: 10, color: Colors.white70),
+                    style: TextStyle(
+                      fontSize: isTablet ? 14 : 10,
+                      color: Colors.white70,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -68,31 +75,31 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               actions: [
                 // Zoom Out
                 IconButton(
-                  icon: const Icon(Icons.zoom_out_rounded),
+                  icon: Icon(Icons.zoom_out_rounded, size: isTablet ? 28 : 24),
                   tooltip: 'Zoom Out',
                   onPressed: () => _pdfController.zoomLevel =
                       (_pdfController.zoomLevel - 0.25).clamp(0.75, 4.0),
                 ),
                 // Zoom In
                 IconButton(
-                  icon: const Icon(Icons.zoom_in_rounded),
+                  icon: Icon(Icons.zoom_in_rounded, size: isTablet ? 28 : 24),
                   tooltip: 'Zoom In',
                   onPressed: () => _pdfController.zoomLevel =
                       (_pdfController.zoomLevel + 0.25).clamp(0.75, 4.0),
                 ),
                 // Print
                 IconButton(
-                  icon: const Icon(Icons.print_rounded),
+                  icon: Icon(Icons.print_rounded, size: isTablet ? 28 : 24),
                   tooltip: 'Print',
                   onPressed: _printPdf,
                 ),
                 // Share
                 IconButton(
-                  icon: const Icon(Icons.share_rounded),
+                  icon: Icon(Icons.share_rounded, size: isTablet ? 28 : 24),
                   tooltip: 'Share PDF',
                   onPressed: _sharePdf,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: isTablet ? 12 : 4),
               ],
             )
           : null,
@@ -132,23 +139,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: SafeArea(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Previous Page
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white, size: 18),
+                      icon: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white, size: isTablet ? 24 : 18),
                       onPressed: _currentPage > 1
                           ? () => _pdfController.previousPage()
                           : null,
                     ),
 
+                    SizedBox(width: isTablet ? 24 : 16),
+
                     // Page Counter with tap-to-jump
                     GestureDetector(
                       onTap: _showPageJumpDialog,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 24 : 16, vertical: isTablet ? 10 : 6),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(20),
@@ -159,19 +168,21 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                           _totalPages > 0
                               ? 'Page $_currentPage of $_totalPages'
                               : 'Loading...',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: isTablet ? 17 : 13,
                           ),
                         ),
                       ),
                     ),
 
+                    SizedBox(width: isTablet ? 24 : 16),
+
                     // Next Page
                     IconButton(
-                      icon: const Icon(Icons.arrow_forward_ios_rounded,
-                          color: Colors.white, size: 18),
+                      icon: Icon(Icons.arrow_forward_ios_rounded,
+                          color: Colors.white, size: isTablet ? 24 : 18),
                       onPressed: _currentPage < _totalPages
                           ? () => _pdfController.nextPage()
                           : null,

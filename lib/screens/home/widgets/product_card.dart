@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../../core/utils/image_cache_manager.dart';
 import '../../../models/product_model.dart';
 import '../../../core/constants/app_colors.dart';
@@ -27,7 +28,17 @@ class _ProductCardState extends State<ProductCard>
     super.build(
       context,
     ); // ✅ Must call super when using AutomaticKeepAliveClientMixin
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet = ResponsiveHelper.isTablet(context);
+        
+        return _buildCardContent(context, isTablet);
+      },
+    );
+  }
 
+  Widget _buildCardContent(BuildContext context, bool isTablet) {
     return GestureDetector(
       onTap: widget.onTap,
       child: Card(
@@ -138,9 +149,9 @@ class _ProductCardState extends State<ProductCard>
                         ),
                         child: Text(
                           '${widget.product.discountPercentage}% OFF',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: isTablet ? 12 : 10,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -208,8 +219,8 @@ class _ProductCardState extends State<ProductCard>
                       widget.product.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: isTablet ? 18 : 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -222,7 +233,7 @@ class _ProductCardState extends State<ProductCard>
                       Text(
                         widget.product.category!,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: isTablet ? 14 : 11,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -237,7 +248,7 @@ class _ProductCardState extends State<ProductCard>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: isTablet ? 14 : 11,
                             fontWeight: FontWeight.w500,
                             color: Colors.grey.shade700,
                           ),
@@ -250,8 +261,8 @@ class _ProductCardState extends State<ProductCard>
                     if (widget.product.price > 0)
                       Text(
                         widget.product.formattedPrice,
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: TextStyle(
+                          fontSize: isTablet ? 20 : 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ),

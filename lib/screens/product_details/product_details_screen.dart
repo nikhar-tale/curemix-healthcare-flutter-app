@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../services/pdf_generator_service.dart';
 import '../../core/utils/notification_helper.dart';
 import '../../main.dart';
+import '../../core/utils/responsive_helper.dart';
 import '../pdf_viewer/pdf_viewer_screen.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
@@ -35,27 +36,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Product Details'),
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: () async {
               try {
-                // Step 1: Run with smooth progress animation (no viewer yet — file not ready)
                 final savedFile = await NotificationHelper.runWithSmoothProgress<File>(
                   title: 'Downloading Product PDF...',
                   task: () => PdfGeneratorService.savePdfToDownloads(widget.product),
                 );
 
-                // Step 2: File is ready — replace snackbar with one that has the View button
-                // Step 2: File is ready — replace snackbar with one that has the View button.
-                // NOTE: showProgressSnackBar uses global messengerKey, so context.mounted
-                // is NOT needed here — this works even if user navigated back to home screen.
                 NotificationHelper.showProgressSnackBar(
                   title: 'Download Complete!',
                   progressNotifier: ValueNotifier(1.0),
                   onViewPdf: () {
-                    // Use root navigator — works from ANY screen
                     CuremixApp.navigatorKey.currentState?.push(
                       MaterialPageRoute(
                         builder: (_) => PdfViewerScreen(
@@ -87,78 +83,118 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Scrollable Content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Image Carousel
-                  _buildImageCarousel(),
-
-                  // Product Info
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Product Name
-                        Text(
-                          widget.product.name,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Rating
-                        if (widget.product.rating != null)
-                          _buildRatingSection(),
-
-                        const SizedBox(height: 16),
-
-                        // Price Section
-                        _buildPriceSection(),
-                        const SizedBox(height: 16),
-
-
-
-                        // Categories
-                        if (widget.product.categories.isNotEmpty)
-                          _buildCategoriesSection(),
-
-                        const SizedBox(height: 20),
-
-                        // Divider
-                        const Divider(),
-
-                        const SizedBox(height: 16),
-
-                        // Description
-                        _buildDescriptionSection(),
-
-                        const SizedBox(height: 16), // Small buffer for bottom bar
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Sticky Bottom Bar
-          _buildStickyBottomBar(),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isTablet = ResponsiveHelper.isTablet(context);
+          
+          if (isTablet) {
+            return _buildTabletLayout();
+          }
+          
+          return _buildMobileLayout();
+        },
       ),
     );
   }
 
-  Widget _buildImageCarousel() {
+  Widget _buildMobileLayout() {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildImageCarousel(),
+                _buildProductInfo(),
+              ],
+            ),
+          ),
+        ),
+        _buildStickyBottomBar(),
+      ],
+    );
+  }
+
+  Widget _buildTabletLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 4,
+          child: Container(
+            color: Colors.grey.shade50,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildImageCarousel(isTablet: true),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        Container(width: 1, color: Colors.grey.shade200),
+
+        Expanded(
+          flex: 6,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: _buildProductInfo(isTablet: true),
+                ),
+              ),
+              _buildStickyBottomBar(isTablet: true),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductInfo({bool isTablet = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.product.name,
+          style: TextStyle(
+            fontSize: isTablet ? 32 : 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        if (widget.product.rating != null)
+          _buildRatingSection(isTablet: isTablet),
+
+        const SizedBox(height: 16),
+
+        _buildPriceSection(isTablet: isTablet),
+        const SizedBox(height: 16),
+
+        if (widget.product.categories.isNotEmpty)
+          _buildCategoriesSection(isTablet: isTablet),
+
+        const SizedBox(height: 20),
+
+        const Divider(),
+
+        const SizedBox(height: 16),
+
+        _buildDescriptionSection(isTablet: isTablet),
+
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildImageCarousel({bool isTablet = false}) {
     final images = widget.product.images.isNotEmpty
         ? widget.product.images.map((e) => e.src).toList()
         : [widget.product.imageUrl];
@@ -168,9 +204,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Main Image with tap-to-zoom hint
           SizedBox(
-            height: 320,
+            height: isTablet ? 450 : 320,
             child: Stack(
               children: [
                 GestureDetector(
@@ -199,7 +234,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                 ),
 
-                // "Tap to zoom" hint (bottom-right)
                 Positioned(
                   bottom: 12,
                   right: 16,
@@ -223,7 +257,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                 ),
 
-                // Image counter (top-right)
                 if (images.length > 1)
                   Positioned(
                     top: 12,
@@ -244,7 +277,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ),
 
-          // Thumbnail Strip
           if (images.length > 1)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -294,27 +326,32 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  // Rating Section
-  Widget _buildRatingSection() {
+  Widget _buildRatingSection({bool isTablet = false}) {
     return Row(
       children: [
-        const Icon(Icons.star, color: Colors.amber, size: 20),
+        Icon(Icons.star, color: Colors.amber, size: isTablet ? 24 : 18),
         const SizedBox(width: 4),
         Text(
           widget.product.rating!.toStringAsFixed(1),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: isTablet ? 18 : 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
         Text(
           '(${widget.product.totalSales ?? 0} sold)',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(
+            fontSize: isTablet ? 16 : 13,
+            color: Colors.grey.shade600,
+          ),
         ),
       ],
     );
   }
 
-  // Price Section
-  Widget _buildPriceSection() {
+  Widget _buildPriceSection({bool isTablet = false}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -324,11 +361,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       ),
       child: Row(
         children: [
-          // Current Price
           Text(
             widget.product.formattedPrice,
-            style: const TextStyle(
-              fontSize: 28,
+            style: TextStyle(
+              fontSize: isTablet ? 36 : 28,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
@@ -336,7 +372,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
           const SizedBox(width: 12),
 
-          // MRP (strikethrough)
           if (widget.product.mrp != null && widget.product.hasDiscount) ...[
             Text(
               widget.product.formattedMrp,
@@ -348,7 +383,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
             const SizedBox(width: 8),
 
-            // Discount Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -370,16 +404,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-
-  // Categories Section
-  Widget _buildCategoriesSection() {
+  Widget _buildCategoriesSection({bool isTablet = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Categories',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: isTablet ? 18 : 14,
             fontWeight: FontWeight.w600,
             color: Colors.grey.shade700,
           ),
@@ -390,17 +422,20 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           runSpacing: 8,
           children: widget.product.categories.map((category) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 16 : 12,
+                vertical: isTablet ? 8 : 6,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 category.name,
-                style: const TextStyle(
-                  fontSize: 13,
+                style: TextStyle(
                   color: AppColors.primary,
-                  fontWeight: FontWeight.w500,
+                  fontSize: isTablet ? 15 : 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             );
@@ -410,8 +445,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  // Description Section
-  Widget _buildDescriptionSection() {
+  Widget _buildDescriptionSection({bool isTablet = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -552,12 +586,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   // Sticky Bottom Bar
-  Widget _buildStickyBottomBar() {
+  Widget _buildStickyBottomBar({bool isTablet = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
+        border: isTablet ? Border(top: BorderSide(color: Colors.grey.shade200)) : null,
+        boxShadow: isTablet ? [] : [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
             blurRadius: 12,
@@ -567,6 +602,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       ),
       child: SafeArea(
         top: false,
+        bottom: !isTablet,
         child: Row(
           children: [
             // Price

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../search/search_screen.dart';
 
 class CategoryQuickChips extends StatelessWidget {
@@ -15,29 +16,31 @@ class CategoryQuickChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             'Quick Categories',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isTablet ? 20 : 16,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
         ),
         SizedBox(
-          height: 100,
+          height: isTablet ? 140 : 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: _categories.length,
             itemBuilder: (context, index) {
               final category = _categories[index];
-              return buildCategoryItem(context, category);
+              return _buildCategoryItem(context, category, isTablet);
             },
           ),
         ),
@@ -45,7 +48,7 @@ class CategoryQuickChips extends StatelessWidget {
     );
   }
 
-  Widget buildCategoryItem(BuildContext context, Map<String, dynamic> category) {
+  Widget _buildCategoryItem(BuildContext context, Map<String, dynamic> category, bool isTablet) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -56,13 +59,13 @@ class CategoryQuickChips extends StatelessWidget {
         );
       },
       child: Container(
-        width: 72,
+        width: isTablet ? 100 : 72,
         margin: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           children: [
             Container(
-              height: 60,
-              width: 60,
+              height: isTablet ? 80 : 60,
+              width: isTablet ? 80 : 60,
               decoration: BoxDecoration(
                 color: category['color'].withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -74,14 +77,14 @@ class CategoryQuickChips extends StatelessWidget {
               child: Icon(
                 category['icon'],
                 color: category['color'],
-                size: 28,
+                size: isTablet ? 40 : 28,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               category['name'],
-              style: const TextStyle(
-                fontSize: 12,
+              style: TextStyle(
+                fontSize: isTablet ? 14 : 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
               ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/responsive_helper.dart';
 
 class HeroCarousel extends StatefulWidget {
   const HeroCarousel({super.key});
@@ -77,10 +78,12 @@ class _HeroCarouselState extends State<HeroCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+    
     return Column(
       children: [
         SizedBox(
-          height: 140,
+          height: isTablet ? 180 : 140,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (index) {
@@ -123,9 +126,9 @@ class _HeroCarouselState extends State<HeroCarousel> {
                         children: [
                           Text(
                             promo['title']!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: isTablet ? 24 : 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -134,7 +137,7 @@ class _HeroCarouselState extends State<HeroCarousel> {
                             promo['subtitle']!,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
-                              fontSize: 12,
+                              fontSize: isTablet ? 16 : 12,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -144,7 +147,7 @@ class _HeroCarouselState extends State<HeroCarousel> {
                     ),
                     const SizedBox(width: 16),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(isTablet ? 16 : 12),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         shape: BoxShape.circle,
@@ -152,7 +155,7 @@ class _HeroCarouselState extends State<HeroCarousel> {
                       child: Icon(
                         _getIconData(promo['icon']!),
                         color: Colors.white,
-                        size: 32,
+                        size: isTablet ? 48 : 32,
                       ),
                     ),
                   ],
