@@ -1,7 +1,6 @@
 import 'package:curemix_healtcare_flutter_app/widgets/image_fullscreen_viewer.dart';
 import 'package:curemix_healtcare_flutter_app/widgets/product_image_gallery.dart';
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../models/product_model.dart';
@@ -185,48 +184,128 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     return Container(
       color: Colors.grey.shade50,
-      height: 380,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (_, __, ___) => ImageFullscreenViewer(
-                      imageUrls: images,
-                      initialIndex: _currentImageIndex,
-                    ),
-                    transitionsBuilder: (_, animation, __, child) {
-                      return FadeTransition(opacity: animation, child: child);
+          // Main Image with tap-to-zoom hint
+          SizedBox(
+            height: 320,
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => ImageFullscreenViewer(
+                          imageUrls: images,
+                          initialIndex: _currentImageIndex,
+                        ),
+                        transitionsBuilder: (_, animation, __, child) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                      ),
+                    );
+                  },
+                  child: ProductImageGallery(
+                    imageUrls: images,
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentImageIndex = index;
+                      });
                     },
                   ),
-                );
-              },
-              child: ProductImageGallery(
-                imageUrls: images,
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentImageIndex = index;
-                  });
-                },
-              ),
+                ),
+
+                // "Tap to zoom" hint (bottom-right)
+                Positioned(
+                  bottom: 12,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.zoom_in, size: 14, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'Tap to zoom',
+                          style: TextStyle(color: Colors.white, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Image counter (top-right)
+                if (images.length > 1)
+                  Positioned(
+                    top: 12,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_currentImageIndex + 1}/${images.length}',
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
+
+          // Thumbnail Strip
           if (images.length > 1)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: SmoothPageIndicator(
-                controller: _pageController,
-                count: images.length,
-                effect: WormEffect(
-                  dotHeight: 8,
-                  dotWidth: 8,
-                  activeDotColor: AppColors.primary,
-                  dotColor: Colors.grey.shade300,
-                ),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              height: 72,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  final isSelected = _currentImageIndex == index;
+                  return GestureDetector(
+                    onTap: () {
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 48,
+                      height: 48,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: CachedNetworkImage(
+                          imageUrl: images[index],
+                          fit: BoxFit.cover,
+                          memCacheWidth: 100,
+                          memCacheHeight: 100,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
         ],
