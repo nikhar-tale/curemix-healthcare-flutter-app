@@ -8,6 +8,7 @@ import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/pdf_generator_service.dart';
 import '../../core/utils/notification_helper.dart';
+import '../../main.dart';
 import '../pdf_viewer/pdf_viewer_screen.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
@@ -47,22 +48,24 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 );
 
                 // Step 2: File is ready — replace snackbar with one that has the View button
-                if (context.mounted) {
-                  NotificationHelper.showProgressSnackBar(
-                    title: 'Download Complete!',
-                    progressNotifier: ValueNotifier(1.0),
-                    onViewPdf: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => PdfViewerScreen(
-                            pdfFile: savedFile,
-                            productName: widget.product.name,
-                          ),
+                // Step 2: File is ready — replace snackbar with one that has the View button.
+                // NOTE: showProgressSnackBar uses global messengerKey, so context.mounted
+                // is NOT needed here — this works even if user navigated back to home screen.
+                NotificationHelper.showProgressSnackBar(
+                  title: 'Download Complete!',
+                  progressNotifier: ValueNotifier(1.0),
+                  onViewPdf: () {
+                    // Use root navigator — works from ANY screen
+                    CuremixApp.navigatorKey.currentState?.push(
+                      MaterialPageRoute(
+                        builder: (_) => PdfViewerScreen(
+                          pdfFile: savedFile,
+                          productName: widget.product.name,
                         ),
-                      );
-                    },
-                  );
-                }
+                      ),
+                    );
+                  },
+                );
               } catch (e) {
                 if (context.mounted) {
                   NotificationHelper.showNotification(

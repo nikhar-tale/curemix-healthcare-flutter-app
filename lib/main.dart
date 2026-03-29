@@ -51,6 +51,9 @@ class CuremixApp extends StatelessWidget {
   // Global key to show notifications from anywhere (even across navigation)
   static final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 
+  // Global navigator key — allows navigation from callbacks outside the widget tree
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
     // Wrap with MultiProvider for state management
@@ -60,6 +63,7 @@ class CuremixApp extends StatelessWidget {
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
         scaffoldMessengerKey: messengerKey,
+        navigatorKey: navigatorKey,
 
         // Theme Configuration
         theme: ThemeData(
