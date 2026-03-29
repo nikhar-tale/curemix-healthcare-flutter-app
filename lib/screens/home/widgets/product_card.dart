@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/utils/image_cache_manager.dart';
 import '../../../models/product_model.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../services/pdf_generator_service.dart';
@@ -52,7 +52,9 @@ class _ProductCardState extends State<ProductCard>
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
-                      // cacheKey: widget.  product.id, // ✅ Explicit cache key
+                      // cacheManager setup
+                      cacheManager: ImageCacheManager.instance, // ✅ Global cache
+                      cacheKey: widget.product.id, // ✅ Explicit cache key
                       memCacheWidth: 400, // ✅ Resize for memory efficiency
                       memCacheHeight: 400, // ✅ Resize for memory efficiency
                       fadeInDuration: const Duration(
@@ -266,18 +268,3 @@ class _ProductCardState extends State<ProductCard>
   }
 }
 
-class MyCacheManager extends CacheManager {
-  static const key = 'curemixImageCache';
-  static final instance = MyCacheManager._();
-
-  MyCacheManager._()
-    : super(
-        Config(
-          key,
-          stalePeriod: const Duration(days: 30),
-          maxNrOfCacheObjects: 200,
-          repo: JsonCacheInfoRepository(databaseName: key),
-          fileService: HttpFileService(),
-        ),
-      );
-}

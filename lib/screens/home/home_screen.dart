@@ -209,6 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             final Product product = provider.products[index];
             return ProductCard(
+              key: ValueKey(product.id),
               product: product,
               onTap: () => _navigateToProductDetails(product),
             );

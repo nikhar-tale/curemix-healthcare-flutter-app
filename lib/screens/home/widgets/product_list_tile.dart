@@ -5,8 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../services/pdf_generator_service.dart';
 import '../../../../core/utils/notification_helper.dart';
+import '../../../../core/utils/image_cache_manager.dart';
 
-class ProductListTile extends StatelessWidget {
+class ProductListTile extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
 
@@ -17,9 +18,19 @@ class ProductListTile extends StatelessWidget {
   });
 
   @override
+  State<ProductListTile> createState() => _ProductListTileState();
+}
+
+class _ProductListTileState extends State<ProductListTile> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // ✅ Keep list items alive when scrolling
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // ✅ Must call super
+
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -44,8 +55,13 @@ class ProductListTile extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: CachedNetworkImage(
-                  imageUrl: product.imageUrl,
+                  imageUrl: widget.product.imageUrl,
                   fit: BoxFit.contain,
+                  cacheManager: ImageCacheManager.instance,
+                  cacheKey: widget.product.id,
+                  memCacheWidth: 400,
+                  memCacheHeight: 400,
+                  fadeInDuration: const Duration(milliseconds: 200),
                   placeholder: (context, url) => Container(
                     color: Colors.grey.shade100,
                     child: const Center(
@@ -77,7 +93,7 @@ class ProductListTile extends StatelessWidget {
                       // Badges Row
                       Row(
                         children: [
-                          if (product.prescriptionRequired)
+                          if (widget.product.prescriptionRequired)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 4, vertical: 2),
@@ -96,7 +112,7 @@ class ProductListTile extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          if (product.category != null)
+                          if (widget.product.category != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
@@ -105,7 +121,7 @@ class ProductListTile extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                product.category!.toUpperCase(),
+                                widget.product.category!.toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w600,
@@ -124,12 +140,12 @@ class ProductListTile extends StatelessWidget {
                               try {
                                 final file = await NotificationHelper.runWithSmoothProgress(
                                   title: 'Preparing PDF for Sharing...',
-                                  task: () => PdfGeneratorService.generateProductPdf(product),
+                                  task: () => PdfGeneratorService.generateProductPdf(widget.product),
                                 );
 
                                 await Share.shareXFiles(
                                   [XFile(file.path)],
-                                  text: 'Check out this product: ${product.name}',
+                                  text: 'Check out this product: ${widget.product.name}',
                                 );
                               } catch (e) {
                                 print('Error sharing product PDF: $e');
@@ -140,10 +156,10 @@ class ProductListTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Icon(
-                            product.isInStock
+                            widget.product.isInStock
                                 ? Icons.check_circle
                                 : Icons.cancel,
-                            color: product.isInStock ? Colors.green : Colors.red,
+                            color: widget.product.isInStock ? Colors.green : Colors.red,
                             size: 16,
                           ),
                         ],
@@ -152,7 +168,7 @@ class ProductListTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    product.name,
+                    widget.product.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -163,21 +179,21 @@ class ProductListTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   // Price row (which was hidden in GridView)
-                  if(product.price > 0)
+                  if(widget.product.price > 0)
                   Row(
                     children: [
                       Text(
-                        product.formattedPrice,
+                        widget.product.formattedPrice,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ),
                       ),
-                      if (product.hasDiscount) ...[
+                      if (widget.product.hasDiscount) ...[
                         const SizedBox(width: 6),
                         Text(
-                          product.formattedMrp,
+                          widget.product.formattedMrp,
                           style: TextStyle(
                             fontSize: 12,
                             decoration: TextDecoration.lineThrough,
@@ -192,7 +208,7 @@ class ProductListTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            '${product.discountPercentage}% OFF',
+                            '${widget.product.discountPercentage}% OFF',
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

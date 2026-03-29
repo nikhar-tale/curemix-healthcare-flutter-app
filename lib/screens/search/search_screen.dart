@@ -313,6 +313,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   itemBuilder: (context, index) {
                     final product = filteredResults[index];
                     return ProductListTile(
+                      key: ValueKey(product.id),
                       product: product,
                       onTap: () => _navigateToProductDetails(product),
                     );
@@ -330,6 +331,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   itemBuilder: (context, index) {
                     final product = filteredResults[index];
                     return ProductCard(
+                      key: ValueKey(product.id),
                       product: product,
                       onTap: () => _navigateToProductDetails(product),
                     );
