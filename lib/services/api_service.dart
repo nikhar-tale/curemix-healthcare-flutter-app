@@ -113,9 +113,5 @@ Future<ApiResponse<List<Product>>> searchProducts(String query, {int page = 1, i
         error: e.toString(),
       );
     }
-    return ApiResponse.error(
-      message: 'Search not implemented',
-      error: 'Search functionality is currently not implemented.',
-    );
   }
 }

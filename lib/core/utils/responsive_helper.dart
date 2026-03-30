@@ -8,14 +8,14 @@ class ResponsiveHelper {
   /// Threshold for large tablets or desktop-like views
   static const double desktopBreakpoint = 1024;
 
-  /// Returns true if the screen width is at least [tabletBreakpoint]
+  /// Returns true if the device is a tablet (Shortest side >= 600dp)
   static bool isTablet(BuildContext context) {
-    return MediaQuery.sizeOf(context).width >= tabletBreakpoint;
+    return MediaQuery.sizeOf(context).shortestSide >= tabletBreakpoint;
   }
 
-  /// Returns true if the screen width is less than [tabletBreakpoint]
+  /// Returns true if the device is a mobile (Shortest side < 600dp)
   static bool isMobile(BuildContext context) {
-    return MediaQuery.sizeOf(context).width < tabletBreakpoint;
+    return MediaQuery.sizeOf(context).shortestSide < tabletBreakpoint;
   }
 
   /// Returns true if the device is in landscape mode
